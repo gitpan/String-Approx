@@ -1,3 +1,11 @@
+Mon Apr 24 23:19:20 2000  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Makefile.PL: The -DAPSE_DEBUGGING was accidentally left on,
+	  resulting in a deluge of debug messages being spewed to stderr.
+	  Oops.  Reported by Rob Fugina.
+	
+	* Approx.pm: Bump to 3.11.
+
 Tue Apr 18 06:48:34 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Released as 3.10.
