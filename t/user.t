@@ -9,7 +9,7 @@ require 'util';
 
 local $^W = 1;
 
-print "1..38\n";
+print "1..39\n";
 
 # test 1: test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
@@ -300,6 +300,13 @@ print "ok 37\n";
 
 print "not " unless aindex("pattern", "aaaaaaaaapattern") == 9;
 print "ok 38\n";
+
+# test 39: Ji Y Park <jypark@Stanford.EDU>
+# 0% must mean 0.
+
+$_="TTES";
+print "not " if amatch("test", ["i I0% S0% D0%"]);
+print "ok 39\n";
 
 # eof
 

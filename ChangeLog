@@ -1,4 +1,9 @@
-Tue Oct 16 20:06:53 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+Sun Aug 18 01:37:53 2002  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Fixed a frontend bug which caused 0% to be rounded up to 1,
+	  (instead of being equal to 0) found by Ji Y Park.
+
+Tue Oct 16 20:06:53 2001  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Documented how one can use the adist() and adistr()
 	  to sort the inputs according on their approximateness,
@@ -14,18 +19,18 @@ Tue Oct 16 20:06:53 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
 	
 	* Released as 3.18.
 
-Fri Aug  3 15:47:10 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+Fri Aug  3 15:47:10 2001  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* 3.17: Add COPYRIGHT and LICENSE to the pod.
 
-Thu Jun 28 23:50:14 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+Thu Jun 28 23:50:14 2001  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Released as 3.16.
 
 	* Ben Kennedy found yet another silly memory leak,
 	  in Approx.pm:_complex() this time.
 
-Sat Feb 10 04:18:09 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+Sat Feb 10 04:18:09 2001  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Rewrote _simple() and _complex(), now the silly memory
 	  leak in the caching code should be gone, the problem was

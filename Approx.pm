@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.18;
+$VERSION = '3.19';
 
 use strict;
 local $^W = 1;
@@ -100,7 +100,7 @@ sub _parse_param {
         while ($_ ne '') {
 	    s/^\s+//;
             if (s/^([IDS]\s*)?(\d+)(\s*%)?//) {
-                my $k = defined $3 ? (($2-1) * $n) / 100 + 1 : $2;
+                my $k = defined $3 ? (($2-1) * $n) / 100 + ($2 ? 1 : 0) : $2;
 
 		if (defined $1) {
 		    $param{$1} = $k;
@@ -585,6 +585,8 @@ modifier like
 	number%
 
 Examples: C<"3">, C<"15%">.
+
+Note that C<0%> is not rounded up, it is equal to C<0>.
 
 Using a similar syntax you can separately control the maximum number
 of insertions, deletions, and substitutions by prefixing the numbers
