@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.08;
+$VERSION = 3.09;
 
 require 5.004_04;
 
@@ -160,6 +160,7 @@ sub _complex {
 
 sub amatch {
     my $P = shift;
+    return 1 unless length $P; 
     my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
 		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
 
@@ -223,7 +224,20 @@ sub asubstitute {
 	(@_ && ref $_[0] eq 'ARRAY') ?
 	    _complex($P, @{ shift(@_) }) : _simple($P);
 
+    unless (length $P) {
+	if (@_) {
+	    foreach (@_) {
+		$_ = $S . $_;
+	    }
+	} elsif (defined $_) {
+	    $_ = $S . $_;
+	} else {
+	    die "asubstitute: \$_ is undefined: what are you substituting?\n";
+	}
+    }
+
     my ($i, $s, @i, @s, @n, @S);
+
 
     if (@_) {
 	if (exists $p{ g }) {
@@ -270,6 +284,7 @@ sub asubstitute {
 
 sub aindex {
     my $P = shift;
+    return 0 unless length $P; 
     my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
 		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
 
@@ -288,6 +303,7 @@ sub aindex {
 
 sub aslice {
     my $P = shift;
+    return (0, 0) unless length $P; 
     my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
 		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
 

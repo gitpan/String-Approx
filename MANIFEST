@@ -9,6 +9,7 @@ COPYRIGHT.agrep
 LGPL
 Makefile.PL
 MANIFEST
+PROBLEMS
 README
 README.apse
 t/aindex.t

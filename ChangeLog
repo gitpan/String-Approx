@@ -1,3 +1,14 @@
+Mon Jul 19 10:42:13 1999  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+
+	* Approx.pm: Released 3.09.
+
+	* Approx.pm: Do the right things if pattern is empty
+	  (the bug found by Anirvan Chatterjee).
+	
+	* apse.c: Fixed the cases "this-has-so-many-edits-that-it-is-
+	  going-to-match-no-matter-what" and "there-are-not-enough-edits-
+	  to-ever-match-this" (the latter bug found by Mitch Helle).
+
 Thu Jun 24 02:00:26 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Released 3.08.

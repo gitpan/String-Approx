@@ -1194,11 +1194,17 @@ static apse_bool_t __apse_match(apse_t		*ap,
     } else if (ap->match_state == APSE_MATCH_STATE_EOT)
 	goto leave;
 
-    if (ap->edit_deletions     > ap->text_size - ap->text_initial_position ||
-	ap->edit_substitutions > ap->text_size - ap->text_initial_position) {
+    if (ap->edit_deletions     >= ap->pattern_size ||
+	ap->edit_substitutions >= ap->pattern_size) {
 	ap->match_state   = APSE_MATCH_STATE_END;
 	ap->match_begin   = ap->text_initial_position;
 	ap->match_end     = ap->text_size - 1;
+	ap->text_position = ap->text_size;
+	goto out;
+    }
+
+    if (ap->pattern_size - ap->edit_deletions > ap->text_size - ap->text_initial_position) {
+	ap->match_state   = APSE_MATCH_STATE_EOT;
 	ap->text_position = ap->text_size;
 	goto out;
     }

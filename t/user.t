@@ -9,7 +9,7 @@ require 'util';
 
 local $^W = 1;
 
-print "1..25\n";
+print "1..29\n";
 
 # test 1: test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
@@ -243,5 +243,21 @@ print "ok 24\n";
 
 print "not " if amatch("Fernandez", "Ferna");
 print "ok 25\n";
+
+# tests 26-28: Mitch Helle <MHelle@linguistech.com>
+
+print "not " if amatch('ffffff', 'a');
+print "ok 26\n";
+
+print "not " if amatch('fffffffffff', 'a');
+print "ok 27\n";
+ 
+print "not " if amatch('fffffffffffffffffffff', 'ab');
+print "ok 28\n";
+
+# test 29: Anirvan Chatterjee <anirvan@chatterjee.net>
+
+print "not " unless amatch("", "foo");
+print "ok 29\n";
 
 # eof
