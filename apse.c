@@ -1,6 +1,7 @@
 /*
 
-Copyright (C) Jarkko Hietaniemi, 1998,1999,2000,2001. All Rights Reserved.
+Copyright (C) by Jarkko Hietaniemi, 1998,1999,2000,2001,2002,2003.
+All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of either:
@@ -183,6 +184,8 @@ apse_bool_t apse_set_pattern(apse_t*		ap,
 
     if (ap->edit_distance)
 	ap->largest_distance = ap->edit_distance * ap->bitvectors_in_state;
+    else
+	ap->largest_distance =  0;
 
     ap->bytes_in_state = ap->bitvectors_in_state * sizeof(apse_vec_t);
 
@@ -459,6 +462,8 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
 
     if (ap->edit_distance && ap->bitvectors_in_state)
 	ap->largest_distance = ap->edit_distance * ap->bitvectors_in_state;
+    else
+	ap->largest_distance =  0;
 
     ap->match_begin_bitvector	=
 	(edit_distance + 1) / APSE_BITS_IN_BITVEC;

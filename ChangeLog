@@ -1,7 +1,19 @@
+Mon May 12 22:09:59 2003  Jarkko Hietaniemi  <jhi@ovipunen.hut.fi>
+
+	* Bug report, analysis, and patch from Rich Williams for
+	  a nasty segfault (no easy test case, sadly).
+
+	* Clarify the documentation about the weirdness of the
+	  'size' from aslice().
+
+	* Released as 3.20.
+
 Sun Aug 18 01:37:53 2002  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Fixed a frontend bug which caused 0% to be rounded up to 1,
 	  (instead of being equal to 0) found by Ji Y Park.
+
+	* Released as 3.19.
 
 Tue Oct 16 20:06:53 2001  Jarkko Hietaniemi  <jhi@iki.fi>
 

@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = '3.19';
+$VERSION = '3.20';
 
 use strict;
 local $^W = 1;
@@ -659,13 +659,13 @@ There's also backwards-scanning C<arindex()>.
 	($index, $size)   = aslice("pattern", [ modifiers ])
 	([$i0, $s0], ...) = aslice("pattern", [ modifiers ], @inputs)
 
-Like C<aindex()> but returns also the size of the match.  If the
-match fails, returns an empty list (when matching against C<$_>) or
-an empty anonymous list corresponding to the particular input.
+Like C<aindex()> but returns also the size (length) of the match.
+If the match fails, returns an empty list (when matching against C<$_>)
+or an empty anonymous list corresponding to the particular input.
 
-Note that the size of the match will very probably be something
-you did not expect (such as longer than the pattern).  This may
-or may not be fixed in future releases.
+Note that the size of the match will very probably be something you
+did not expect (such as longer than the pattern, or a negative
+number).  This may or may not be fixed in future releases.
 
 If the modifier
 
@@ -688,7 +688,7 @@ Return the I<edit distance> or distances between the pattern and the
 input or inputs.  Zero edit distance means exact match.  (Remember
 that the match can 'float' in the inputs, the match is a substring
 match.)  If the pattern is longer than the input or inputs, the
-returned distance or distance is or are negative.
+returned distance or distances is or are negative.
 
 	use String::Approx 'adistr';
 
