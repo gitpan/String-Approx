@@ -4,7 +4,7 @@ chdir('t') or die "could not chdir to 't'";
 
 require 't'; # har har
 
-print "1..8\n";
+print "1..9\n";
 
 # test 1
 
@@ -192,5 +192,13 @@ t(
 print "ok 8\n";
 
 close(WORDS);
+
+# test 9: test for undefined input
+
+undef $_;
+eval 'asubstitute("foo","bar")';
+print "# $@";
+print 'not ' unless ($@ =~ /what are you matching against/);
+print "ok 9\n";
 
 # eof

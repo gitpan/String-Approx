@@ -286,6 +286,8 @@ The template is now:
 
 and the examples still go where the 'C<# E<lt>--->' line is.
 
+=over 8
+
 =item Match 'perl' with one difference from a list
 
 	@matched = amatch('perl', @words);
@@ -302,9 +304,22 @@ the elements of the C<@words> that matched approximately.
 
 =back
 
+=head1 ERROR MESSAGES
+
+=over 8
+
+=item amatch: $_ is undefined: what are you matching against?
+
+=item asubstitute: $_ is undefined: what are you matching against?
+
+Happen when you have nothing in $_ and try to C<amatch()> or
+C<asubstitute()>.  Perhaps you did forget the Perl option C<-n>?
+
+=back
+
 =head1 VERSION
 
-Version 2.0.
+Version 2.0_01.
 
 =head1 LIMITATIONS
 
@@ -563,6 +578,9 @@ sub amatch {
 
     return grep /$mpat/, @list if @list;
 
+    die "amatch: \$_ is undefined: what are you matching against?\n"
+	unless defined $_;
+
     return ($_) if /$mpat/;
 
     ();
@@ -620,6 +638,9 @@ sub asubstitute {
 
 	return @m;
     }
+
+    die "asubstitute: \$_ is undefined: what are you matching against?\n"
+	unless defined $_;
 
     return ($_) if s/($spat)/_subst($sub, $`, $1, $')/e;
 
