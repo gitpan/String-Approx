@@ -4,9 +4,7 @@ chdir('t') or die "could not chdir to 't'";
 
 require 't'; # har har
 
-print "1..12\n";
-
-# String::Approx::debug(1);
+print "1..13\n";
 
 # test 1
 
@@ -192,5 +190,14 @@ t(
   [amatch('perl', ['?'], @words)]);
 
 print "ok 12\n";
+
+# test 13: Slaven Rezic <eserte@cs.tu-berlin.de>
+
+{
+my @w=('one hundred','two hundred','three hundred','bahnhofstr. (koepenick)');
+my @m=amatch('bahnhofstr. ', ['i',3], @w);
+t(['bahnhofstr. (koepenick)'],[@m]);
+print "ok 13\n";
+}
 
 # eof

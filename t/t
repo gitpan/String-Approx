@@ -3,7 +3,7 @@ sub t {
     my ($wa, $wb, $db);
 
 #    print STDERR "t: a: @$a\n";
-#    print STDERR "t: b: @$b\n";
+#   print STDERR "t: b: @$b\n";
     if (@$a == @$b) {
 	for $wa (@$a) {
 	    $wb = shift(@$b);

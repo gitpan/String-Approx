@@ -422,7 +422,7 @@ Also this tends to be somewhat slower.
 
 =head1 VERSION
 
-Version 2.5.
+Version 2.6.
 
 =head1 LIMITATIONS
 
@@ -485,6 +485,7 @@ Jarkko Hietaniemi C<E<lt>jhi@iki.fiE<gt>>
 	Lars Gregersen C<E<lt>lars.gregersen@private.dkE<gt>>
 	Helmut Jarausch C<E<lt>jarausch@IGPM.Rwth-Aachen.DEE<gt>>
 	Håkan Kjellerstrand C<E<lt>hakank@netch.seE<gt>>
+	Slaven Rezic C<E<lt>eserte@cs.tu-berlin.deE<gt>>
 	Nathan Torkington C<E<lt>gnat@frii.comE<gt>>
 
 Alberto Fontaneda and Dmitrij Frishman found a bug in long patterns,
@@ -496,6 +497,8 @@ times faster String::Approx.  (MakeRegex was used for completely other
 purposes).
 
 Helmut Jarausch noticed that 2.3 asubst() failed its test case in 5.004_50+.
+
+Slaven Rezic found a bug in 2.5 and supplied a test case and a fix for it.
 
 Nathan Torkington is to blame for the new API of release 2. :-)
 
@@ -511,7 +514,7 @@ use vars qw($PACKAGE $VERSION $compat1
 	    %P @aL @dL @Pl %Pp);
 
 $PACKAGE = 'String::Approx';
-$VERSION = '2.5';
+$VERSION = 2.6;
 
 $compat1 = 0;
 
@@ -1009,7 +1012,7 @@ sub amatch {
 		    @pos = ();
 		}
 		for ($i = $bad = 0; $i < @list; $i++) {
-		    unless ($bad[$i]) {
+		    unless (defined $bad[$i]) {
 			if (eval { $list[$i] =~ /$mpat/g }) {
 			    die "amatch: too long pattern.\n"
 				if ($@ =~ /regexp too big/);
@@ -1025,7 +1028,7 @@ sub amatch {
 	    my @got = ();
 
 	    for ($i = 0; $i < @list; $i++) {
-		push(@got, $list[$i]) unless $bad[$i];
+		push(@got, $list[$i]) unless defined $bad[$i];
 	    }
 
 	    return @got;
