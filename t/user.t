@@ -9,7 +9,7 @@ require 'util';
 
 local $^W = 1;
 
-print "1..37\n";
+print "1..38\n";
 
 # test 1: test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
@@ -296,4 +296,10 @@ print "ok 36\n";
 print "not " unless aindex('tccaacttctctgtgactgaccaaagaa','tctttgcatccaatactccaacttctctgtggctgaccaaagaattggcacctatcttgccagtcaggtagttctgatgggtccagcacagactggctgcctgggggagaaagacagcattgatttgaagtggtgaacactataactcccctagctcatcacaaaacaagcagacaagaaccacagcttc') == 16;
 print "ok 37\n";
 
+# test 38: Juha Muilu <muilu@ebi.ac.uk>
+
+print "not " unless aindex("pattern", "aaaaaaaaapattern") == 9;
+print "ok 38\n";
+
 # eof
+

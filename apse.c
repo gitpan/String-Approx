@@ -175,7 +175,8 @@ apse_bool_t apse_set_pattern(apse_t*		ap,
 
     ap->is_greedy    = 0;
 
-    ap->prev_active   = 0;
+    ap->prev_equal   = 0;
+    ap->prev_active  = 0;
 
     ap->pattern_size = pattern_size;
     ap->bitvectors_in_state = (pattern_size - 1)/APSE_BITS_IN_BITVEC + 1;
@@ -362,6 +363,7 @@ static void _apse_reset_state(apse_t* ap) {
     (void)memset(ap->state,      0, ap->bytes_in_all_states);
     (void)memset(ap->prev_state, 0, ap->bytes_in_all_states);
 
+    ap->prev_equal  = 0;
     ap->prev_active = 0;
 
     for (i = 1; i <= ap->edit_distance; i++) {
@@ -895,8 +897,11 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 		if (ap->state[j])
 		    active++;
 	    }
+#ifdef APSE_DEBUGGING
+	    printf("(equal = %d, active = %d)\n", equal, active);
+#endif
 	    if (equal == ap->edit_distance + 1 && ap->is_greedy == 0 ||
-		equal == 0 && ap->prev_active && active > ap->prev_active &&
+		equal < ap->prev_equal && ap->prev_active && active > ap->prev_active &&
 		!APSE_BIT_TST(ap->state,
 			      ap->edit_distance,
 			      ap->bitvectors_in_state,
@@ -908,6 +913,7 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 	    }
 	    else if (active == 0)
 		_apse_match_fail(ap);
+	    ap->prev_equal  = equal;
 	    ap->prev_active = active;
 	}
 	break;

@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.17;
+$VERSION = 3.18;
 
 use strict;
 local $^W = 1;
@@ -57,7 +57,7 @@ sub cache_purge (;$) {
 my %_simple;
 my %_simple_usage_count;
 
-sub _cache_flush_simple {
+sub _cf_simple {
     my $P = shift;
 
     my @usage =
@@ -83,7 +83,7 @@ sub _simple {
 	$_simple_usage_count{$P}++;
 
 	if (keys %_simple_usage_count > $CACHE_MAX) {
-	    _cache_flush_simple($P);
+	    _cf_simple($P);
 	}
     }
 
@@ -136,7 +136,7 @@ my %_parsed_param;
 my %_complex;
 my %_complex_usage_count;
 
-sub _flush_cache_complex {
+sub _cf_complex {
     my $P = shift;
 
     my @usage =
@@ -218,7 +218,7 @@ sub _complex {
 
 	# If our cache overfloweth.
 	if (scalar keys %_complex_usage_count > $CACHE_MAX) {
-	    _cache_flush_complex($P);
+	    _cf_complex($P);
 	}
     }
 
@@ -232,8 +232,8 @@ sub cache_disable {
 sub cache_flush_all {
     my $old_purge = cache_purge();
     cache_purge(1);
-    _cache_flush_simple('');
-    _cache_flush_complex('');
+    _cf_simple('');
+    _cf_complex('');
     cache_purge($old_purge);
 }
 
@@ -444,9 +444,13 @@ sub adistr {
 	return [] unless $l0;
 	return     [ map { _adist($a0, $_, @m) / $l0 } @{$a1} ];
     } else {
-	my $l0 = length($a0);
-	return undef unless $l0;
-	return _adist($a0, $a1, @m) / $l0;
+	if (wantarray) {
+	    return map { _adist($a0, $_, @m) } ($a1, @_);
+	} else {
+	    my $l0 = length($a0);
+	    return undef unless $l0;
+	    return _adist($a0, $a1, @m) / $l0;
+	}
     }
 }
 
@@ -696,6 +700,15 @@ match can 'float' in the inputs, the match is a substring match.)  If
 the pattern is longer than the input or inputs, the returned distance
 or distances is or are negative.
 
+You can use adist() or adistr() to sort the inputs according to their
+approximateness:
+
+	my %d;
+	@d{@inputs} = map { abs } adistr("pattern", @inputs);
+	my @d = sort { $d{$a} <=> $d{$b} } @inputs;
+
+Now C<@d> contains the inputs, the most like C<"pattern"> first.
+
 =head1 CONTROLLING THE CACHE
 
 C<String::Approx> maintains a LU (least-used) cache that holds the
@@ -838,14 +851,15 @@ there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 The following people have provided valuable test cases, documentation
 clarifications, and other feedback:
 
-Jared August, Anirvan Chatterjee, Steve A. Chervitz, Aldo Calpini,
-David Curiel, Teun van den Dool, Alberto Fontaneda, Rob Fugina,
-Dmitrij Frishman, Lars Gregersen, Kevin Greiner, B. Elijah Griffin,
-Mike Hanafey, Mitch Helle, Ricky Houghton, Helmut Jarausch,
-Damian Keefe, Ben Kennedy, Craig Kelley, Franz Kirsch, Dag Kristian,
-Mark Land, J. D. Laub, Sergey Novoselov, Andy Oram, Eric Promislow,
-Nikolaus Rath, Stefan Ram, Dag Kristian Rognlien, Stewart Russell,
-Slaven Rezic, Chris Rosin, Ilya Sandler, Bob J.A. Schijvenaars,
+Jared August, Arthur Bergman, Anirvan Chatterjee, Steve A. Chervitz,
+Aldo Calpini, David Curiel, Teun van den Dool, Alberto Fontaneda,
+Rob Fugina, Dmitrij Frishman, Lars Gregersen, Kevin Greiner,
+B. Elijah Griffin, Mike Hanafey, Mitch Helle, Ricky Houghton,
+Helmut Jarausch, Damian Keefe, Ben Kennedy, Craig Kelley,
+Franz Kirsch, Dag Kristian, Mark Land, J. D. Laub, Juha Muilu,
+Sergey Novoselov, Andy Oram, Eric Promislow, Nikolaus Rath,
+Stefan Ram, Dag Kristian Rognlien, Stewart Russell, Slaven Rezic,
+Chris Rosin, Pasha Sadri, Ilya Sandler, Bob J.A. Schijvenaars,
 Ross Smith, Frank Tobin, Greg Ward, Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
