@@ -2,9 +2,9 @@ use String::Approx 'amatch';
 
 chdir('t') or die "could not chdir to 't'";
 
-require 't'; # har har
+require 'util';
 
-print "1..13\n";
+print "1..10\n";
 
 # test 1
 
@@ -132,7 +132,7 @@ print "ok 6\n";
 
 undef $_;
 eval 'amatch("foo")';
-print 'not ' unless ($@ =~ /what are you matching against/);
+print 'not ' unless ($@ =~ /what are you matching/);
 print "ok 7\n";
 $_ = 'foo'; # anything defined so later tests do not fret
 
@@ -147,32 +147,7 @@ $_ = 'xyz' x 10 . 'abc0defghijabc1defghij' . 'zyx' x 10;
 print 'not ' unless amatch('abcdefghij' x 2);
 print "ok 9\n";
 
-# test 10: test long pattern NOT matching
-# NOTE: this shows the weirdness of long pattern matching:
-# compare this with the test #9.  You will notice that
-# the only difference is that the test fails if both the
-# mutations are in the same partition but succeeds when
-# mutations are in different partitions.
-
-$_ = 'xyz' x 10 . 'abc0de1fghijabcdefghij' . 'zyx' x 10;
-print 'not ' if amatch('abcdefghij' x 2);
-print "ok 10\n";
-
-# test 11: test long pattern both matching and not matching
-# Thanks to Alberto Fontaneda <alberfon@ctv.es>
-# for this test case and also thanks to Dmitrij Frishman
-# <frishman@mips.biochem.mpg.de> for testing this test.
-{
-my @l = ('perl warks fiine','parl works fine', 'perl worrs', 'perl warkss');
-my @m = amatch('perl works fin', [2] , @l);
-print 'not ' if not @m == 2 or
-                $m[0] ne 'perl warks fiine' or
-                $m[1] ne 'parl works fine';
-print "ok 11\n";
-#print "m = (@{[join(':',@m)]})\n";
-}
-
-# test 12: test stingy matching.
+# test 10: test stingy matching.
 
 t(
   [qw(
@@ -189,15 +164,6 @@ t(
      )],
   [amatch('perl', ['?'], @words)]);
 
-print "ok 12\n";
+print "ok 10\n";
 
-# test 13: Slaven Rezic <eserte@cs.tu-berlin.de>
-
-{
-my @w=('one hundred','two hundred','three hundred','bahnhofstr. (koepenick)');
-my @m=amatch('bahnhofstr. ', ['i',3], @w);
-t(['bahnhofstr. (koepenick)'],[@m]);
-print "ok 13\n";
-}
-
-# eof
+# that's it.

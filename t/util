@@ -2,8 +2,13 @@ sub t {
     my ($a, $b) = @_;
     my ($wa, $wb, $db);
 
-#    print STDERR "t: a: @$a\n";
-#   print STDERR "t: b: @$b\n";
+    my $not = 0;
+
+    foreach (@$b) { chomp }
+
+    my @oa = @$a;
+    my @ob = @$b;
+
     if (@$a == @$b) {
 	for $wa (@$a) {
 	    $wb = shift(@$b);
@@ -15,14 +20,20 @@ sub t {
 	        $wb =~ s/\s+$//;
 	    }
 	    if (not $db or $wa ne $wb) {
-#		print STDERR "ne: $wa $wb\n";
+		print STDERR "# ne: $wa $wb\n";
 		print 'not ';
+		$not = 1;
 		last;
 	    }
 	}
     } else {
-#	print STDERR "!=: ", scalar @$a, " ", scalar @$b, "\n";
+	print STDERR "# !=: ", scalar @$a, " ", scalar @$b, "\n";
 	print 'not ';
+	$not = 1;
+    }
+    if ($not) {
+	print STDERR "# EXPECTED: @oa\n";
+	print STDERR "# GOT:      @ob\n";
     }
 }
 

@@ -1,52 +1,53 @@
-String::Approx README
+Welcome to String::Approx 3.0.
 
-This Perl module implements approximate matching aka fuzzy matching.
+This release is a major update from String Approx 2,
+of which 2.7 was the last release.
 
-NOTE!  This module has version 2 calling interface that is
-incompatible with the version 1.  In plain English: certain things
-that used to work with the old version do not work any more quite that
-way they used to.  Okay, you want to know anyway what has changed:
-the way modifiers ('i', '20%', 'I2') are specified in the call has
-changed.  Read on to find out why this change was made.
+The most important change was that the underlying algorithm was
+changed completely.  Instead of doing everything in Perl using regular
+expressions we now do the matching in C using the so-called Manber-Wu
+shift-add algorithm.  You have met this algorithm if you have used
+the agrep utility or the Glimpse indexing system.  More details
+in the file README.apse.
 
-I am very sorry about this incompatibility but there are bonuses.
+This change brings both good and bad news.  Good news first.
 
-	- String::Approx is now (release 2.3) about 40 times faster
-	  than release 1.6 was.  From release 2.2 we had a speed
-	  jump by factor or two thanks to Håkan Kjellerstrand
-	  and Lars Gregersen.
+* We are now 2-3 times faster than String::Approx version 2.
+* There should be no limit on the length of the pattern.
+  Extremely long patterns haven't been tested much, though, so
+  please do not assume overmuch.  The used algorithm is actually
+  _independent_ of the length of the pattern: it's O(kn) where
+  k is the number of errors and n the length of the text.
 
-	- there is now a much more natural syntax:
+Then the bad news:
 
-	@matched     = amatch     ("pattern", @match_from_these);
-	@substituted = asubstitute("pattern", @substitute_in_these);
+* You do need a C compiler.  If your system does not have a C compiler
+  you should either get one or find a friendly soul to compile this
+  extension for you.
+* The semantics of asubstitute() have changed.  The match is now
+  always stingy; that is, as short as possible.  Previously
+  if you matched for "word" with edit distance of two, "cork"
+  and "wool" both would have matched -- and they still do.
+  But: the matching parts will be "or" and "wo" and nothing more.
+  There's still the stingy option but that's rather pointless now
+  as far as shortening the match goes: it is now useful only for
+  sligthly speeding up matching.  This change messes up asubstitute()
+  rather badly, I'm very sorry about this.  I will try to think of
+  something better in future releases.
+* aregex() is gone not to return because we no more use regular expressions.
+* The 'compat1' option to be backward compatible with String::Approx
+  release 1 is no more supported.
+  
+Perl 5.004_04 required (but I recommend 5.005_02).
 
-	  that is, you can now match/substitute from/in somewhere
-	  else than just $_.  If you leave out the target @list
-	  of amatch/asubstitute the matching is still done at $_.
-	- the modifiers?  Well, this is how you match case-insensitively:
-
-		amatch("pattern", ['i'])
-
-	  A little more writing than before, the square brackets.
-	  Read the pod documentation in Approx.pm for more details.
-
-There is a String::Approx version 1 calling interface compability mode
-to enable the old calling interface.  If you use it you cannot use the
-above match-from-an-array-instead-of-the-$_-interface.  The compability
-mode is enabled by the "compat1" tag, for exampe:
-
-		use String::Approx qw(amatch compat1);
-
-To build the kit:
+Installation is as horribly complicated as before:
 
 	perl Makefile.PL
 	make
 	make test
-
-To install the kit:
-
 	make install
 
--- 
-Jarkko Hietaniemi <jhi@iki.fi>
+Let me (jhi@iki.fi) know of any trouble.  Also let me know of
+cool uses you put String::Approx into.
+
+That's it.  Enjoy.
