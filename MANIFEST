@@ -11,7 +11,9 @@ Makefile.PL
 MANIFEST
 README
 README.apse
+t/aindex.t
 t/amatch.t
+t/aslice.t
 t/asubst.t
 t/user.t
 t/util

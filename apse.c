@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) Jarkko Hietaniemi, 1998. All Rights Reserved.
+Copyright (C) Jarkko Hietaniemi, 1998-1999. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of either:
@@ -25,7 +25,7 @@ Furthermore:
 
 /*
 
-  $Id: apse.c,v 1.35 1998/12/15 12:52:40 jhi Exp $
+  $Id: apse.c,v 1.1 1999/06/23 16:09:13 jhi Exp jhi $
 
 */
 
@@ -189,8 +189,8 @@ apse_bool_t apse_set_pattern(apse_t*		ap,
 
     for (i = 0; i < pattern_size; i++)
 	APSE_BIT_SET(ap->case_mask,
-		      (unsigned)pattern[i],
-		      ap->bitvectors_in_state, i);
+		     (unsigned)pattern[i],
+		     ap->bitvectors_in_state, i);
 
     ap->pattern_mask = ap->case_mask;
 
@@ -198,7 +198,15 @@ apse_bool_t apse_set_pattern(apse_t*		ap,
 	(apse_vec_t)1 << ((pattern_size - 1) % APSE_BITS_IN_BITVEC);
 
 out:
-    return ap ? 1 : 0;
+    if (ap && ap->case_mask)
+	return 1;
+    else {
+	if (ap->case_mask)
+	    free(ap->case_mask);
+	if (ap)
+	    free(ap);
+	return 0;
+    }
 }
 
 void apse_set_greedy(apse_t *ap, apse_bool_t greedy) {
@@ -358,10 +366,43 @@ static void _apse_reset_state(apse_t* ap) {
     }
 }
 
+apse_bool_t apse_set_text_position(apse_t *ap,
+					 apse_size_t text_position) {
+    ap->text_position = text_position;
+
+    return 1;
+}
+
+apse_size_t apse_get_text_position(apse_t *ap) {
+    return ap->text_position;
+}
+
+apse_bool_t apse_set_text_initial_position(apse_t *ap,
+					   apse_size_t text_initial_position) {
+    ap->text_initial_position = text_initial_position;
+
+    return 1;
+}
+
+apse_size_t apse_get_text_initial_position(apse_t *ap) {
+    return ap->text_initial_position;
+}
+
+apse_bool_t apse_set_text_final_position(apse_t *ap,
+					 apse_size_t text_final_position) {
+    ap->text_final_position = text_final_position;
+
+    return 1;
+}
+
+apse_size_t apse_get_text_final_position(apse_t *ap) {
+    return ap->text_final_position;
+}
+
 void apse_reset(apse_t *ap) {
     _apse_reset_state(ap);
 
-    ap->text_position	 = 0;
+    ap->text_position = ap->text_initial_position;
 
     ap->match_state = APSE_MATCH_STATE_BOT;
     ap->match_begin = APSE_MATCH_BAD;
@@ -373,7 +414,6 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
 
     if (ap->state)
 	free(ap->state);
-
     if (ap->prev_state)
 	free(ap->prev_state);
 
@@ -399,6 +439,9 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
 	ap->edit_substitutions		= edit_distance;
     }
 
+    if (ap->edit_distance && ap->bitvectors_in_state)
+	ap->largest_distance = ap->edit_distance * ap->bitvectors_in_state;
+
     ap->match_begin_bitvector	=
 	(edit_distance + 1) / APSE_BITS_IN_BITVEC;
     ap->match_begin_prefix = ((apse_vec_t)1 << edit_distance) - 1;
@@ -414,6 +457,15 @@ out:
 
 apse_size_t apse_get_edit_distance(apse_t *ap) {
     return ap->edit_distance;
+}
+
+apse_bool_t apse_set_minimal_distance(apse_t* ap, apse_bool_t minimal) {
+    ap->use_minimal_distance = minimal;
+    return 1;
+}
+
+apse_bool_t apse_get_minimal_distance(apse_t *ap) {
+    return ap->use_minimal_distance;
 }
 
 apse_bool_t apse_set_exact_slice(apse_t*	ap,
@@ -562,6 +614,7 @@ apse_t *apse_create(unsigned char*	pattern,
     ap->edit_insertions		= 0;
     ap->edit_deletions		= 0;
     ap->edit_substitutions	= 0;
+    ap->use_minimal_distance	= 0;
 
     ap->bitvectors_in_state	= 0;
     ap->bytes_in_state		= 0;
@@ -571,6 +624,8 @@ apse_t *apse_create(unsigned char*	pattern,
     ap->text			= 0;
     ap->text_size		= 0;
     ap->text_position		= 0;
+    ap->text_initial_position	= 0;
+    ap->text_final_position	= APSE_MATCH_BAD;
 
     ap->state			= 0;
     ap->prev_state		= 0;
@@ -867,6 +922,8 @@ static void _apse_exact_multiple(apse_t* ap) {
 
 static apse_bool_t _apse_match_single_simple(apse_t *ap) {
     /* single apse_vec_t, edit_distance */
+
+    APSE_DEBUG(printf("(match single simple)\n"));
     for ( ; ap->text_position < ap->text_size; ap->text_position++) {
 	apse_vec_t	t =
       	    ap->pattern_mask[(unsigned)ap->text[ap->text_position] *
@@ -896,6 +953,7 @@ static apse_bool_t _apse_match_multiple_simple(apse_t *ap) {
     /* multiple apse_vec_t:s, has_different_distances */
     apse_size_t	h, i;
 
+    APSE_DEBUG(printf("(match multiple simple)\n"));
     for ( ; ap->text_position < ap->text_size; ap->text_position++) {
 	apse_vec_t	*t =
 	    ap->pattern_mask +
@@ -941,6 +999,7 @@ static apse_bool_t _apse_match_multiple_simple(apse_t *ap) {
 
 static apse_bool_t _apse_match_single_complex(apse_t *ap) {
     /* single apse_vec_t, has_different_distances */
+    APSE_DEBUG(printf("(match single complex)\n"));
     for ( ; ap->text_position < ap->text_size; ap->text_position++) {
 	unsigned char	o = ap->text[ap->text_position];
 	apse_vec_t	t =
@@ -986,6 +1045,7 @@ static apse_bool_t _apse_match_multiple_complex(apse_t *ap) {
     /* multiple apse_vec_t:s, has_different_distances */
     apse_size_t	h, i;
 
+    APSE_DEBUG(printf("(match multiple complex)\n"));
     for ( ; ap->text_position < ap->text_size; ap->text_position++) {
 	unsigned char	o = ap->text[ap->text_position];
 	apse_vec_t	*t =
@@ -1115,19 +1175,33 @@ static apse_bool_t _apse_match_multiple_complex(apse_t *ap) {
     return 0;
 }
 
-static apse_bool_t _apse_match(apse_t *ap,
-			       unsigned char *text,
-			       apse_size_t text_size) {
+static apse_bool_t __apse_match(apse_t		*ap,
+				unsigned char	*text,
+				apse_size_t	text_size) {
     apse_bool_t	did_match = 0;
 
     APSE_DEBUG(printf("(match enter)\n"));
 
     if (ap->match_state == APSE_MATCH_STATE_BOT) {
 	ap->text      = text;
-	ap->text_size = text_size;
+	if (ap->text_final_position == APSE_MATCH_BAD)
+	    ap->text_size = text_size;
+	else
+	    ap->text_size =
+		ap->text_final_position > text_size ?
+		    text_size : ap->text_final_position + 1;
 	_apse_match_bot(ap);
     } else if (ap->match_state == APSE_MATCH_STATE_EOT)
 	goto leave;
+
+    if (ap->edit_deletions     > ap->text_size - ap->text_initial_position ||
+	ap->edit_substitutions > ap->text_size - ap->text_initial_position) {
+	ap->match_state   = APSE_MATCH_STATE_END;
+	ap->match_begin   = ap->text_initial_position;
+	ap->match_end     = ap->text_size - 1;
+	ap->text_position = ap->text_size;
+	goto out;
+    }
 
     if (text_size + ap->edit_distance < ap->pattern_size + ap->text_position) {
 	ap->text_position = ap->text_size;
@@ -1186,10 +1260,48 @@ static apse_bool_t _apse_match(apse_t *ap,
     return did_match;
 }
 
+static apse_bool_t _apse_match(apse_t 		*ap,
+			       unsigned char	*text,
+			       apse_size_t	text_size) {
+    if (ap->use_minimal_distance) {
+	apse_size_t minimal_edit_distance;
+	apse_size_t previous_edit_distance;
+	apse_size_t next_edit_distance;
+
+	for (next_edit_distance = 0; ;) {
+	    apse_set_edit_distance(ap, next_edit_distance);
+	    if (__apse_match(ap, text, text_size))
+		break;
+	    previous_edit_distance = next_edit_distance;
+	    next_edit_distance = 2 * next_edit_distance + 1;
+	} 
+	minimal_edit_distance = 0;
+	if (next_edit_distance) {
+	    do {
+		minimal_edit_distance =
+		    (previous_edit_distance + next_edit_distance) / 2;
+		if (minimal_edit_distance == previous_edit_distance)
+		    break;
+		apse_set_edit_distance(ap, next_edit_distance);
+		if (__apse_match(ap, text, text_size))
+		    next_edit_distance     = minimal_edit_distance;
+		else
+		    previous_edit_distance = minimal_edit_distance;
+	    } while (previous_edit_distance < next_edit_distance);
+	    minimal_edit_distance++;
+	}
+	apse_set_edit_distance(ap, minimal_edit_distance);
+	__apse_match(ap, text, text_size);
+
+	return 1;
+    } else
+	return __apse_match(ap, text, text_size);
+}
+
 apse_bool_t apse_match(apse_t *ap,
 		       unsigned char *text, apse_size_t text_size) {
     apse_bool_t did_match = _apse_match(ap, text, text_size);
-    
+
     _apse_match_eot(ap);
     apse_reset(ap);
 

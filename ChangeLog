@@ -1,3 +1,31 @@
+Thu Jun 24 02:00:26 1999  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Approx.pm: Released 3.08.
+	
+	* Approx.pm: Add aslice() as suggested by Mike Hanafey.
+	
+	* apse.h: Introduce use_minimal_distance.
+
+	* apse.c: Implement use_minimal_distance.
+
+	* t/aslice.t: Test the new feature.
+	
+	* MANIFEST: Add t/aslice.t.
+	
+Wed Jun 23 20:07:05 1999  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Approx.pm: Released 3.07.
+	
+	* Approx.pm: Add aindex() as suggested by Mike Hanafey.
+
+	* apse.h: Introduce text_initial_position and text_final_position.
+
+	* apse.c: Implement text_initial_position and text_final_position.
+
+	* t/aindex.t: Test the new feature.
+	
+	* MANIFEST: Add t/aindex.t.
+	
 Wed Jun 16 14:19:39 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Released 3.06.

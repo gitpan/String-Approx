@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.06;
+$VERSION = 3.08;
 
 require 5.004_04;
 
@@ -15,7 +15,7 @@ require DynaLoader;
 
 @ISA = qw(Exporter DynaLoader);
 
-@EXPORT_OK = qw(amatch asubstitute);
+@EXPORT_OK = qw(amatch asubstitute aindex aslice);
 
 bootstrap String::Approx $VERSION;
 
@@ -63,6 +63,12 @@ sub _parse_param {
 		} else {
 		    $param{k}  = $k;
 		}
+	    } elsif (s/^initial_position\W+(\d+)\b//) {
+		$param{'initial_position'} = $1;
+	    } elsif (s/^final_position\W+(\d+)\b//) {
+		$param{'final_position'} = $1;
+	    } elsif (s/^minimal_distance\b//) {
+		$param{'minimal_distance'} = 1;
             } elsif (s/^i//) {
                 $param{ i } = 1;
             } elsif (s/^g//) {
@@ -70,7 +76,7 @@ sub _parse_param {
             } elsif (s/^\?//) {
                 $param{'?'} = 1;
             } else {
-                die "unknown match parameter: '$_'\n";
+                die "unknown parameter: '$_'\n";
             }
         }
     }
@@ -122,16 +128,28 @@ sub _complex {
 	
 	$_complex{$P}->{$_param_key}->set_caseignore_slice
 	    if exists $param{'i'};
+
+	$_complex{$P}->{$_param_key}->
+	  set_text_initial_position($param{'initial_position'})
+	    if exists $param{'initial_position'};
+
+	$_complex{$P}->{$_param_key}->
+	  set_text_final_position($param{'final_position'})
+	    if exists $param{'final_position'};
+
+	$_complex{$P}->{$_param_key}->set_minimal_distance()
+	    if exists $param{'minimal_distance'};
     }
 
     $_complex_usage_count{$P}->{$_param_key}++;
 
+    # If our cache overfloweth.
     if (scalar keys %_complex_usage_count > $CACHE_MAX) {
 	my @usage =
                 sort { $_complex_usage_count{$a} <=>
                        $_complex_usage_count{$b} }
 	             keys %_complex_usage_count;
-
+	# Make room, delete the least used entries.
 	foreach my $i (0..$CACHE_N_PURGE) {
 	    delete $_complex_usage_count{$usage[$i]};
 	}
@@ -162,7 +180,7 @@ sub amatch {
 	    return 1 if $a->match($_);
         }
     } 
-    return        $a->match($_)      if defined $_;
+    return $a->match($_) if defined $_;
     die "amatch: \$_ is undefined: what are you matching?\n";
 }
 
@@ -248,6 +266,38 @@ sub asubstitute {
     } else {
 	die "asubstitute: \$_ is undefined: what are you substituting?\n";
     }
+}
+
+sub aindex {
+    my $P = shift;
+    my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
+		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
+
+    $a->set_greedy(); # The *first* match, thank you.
+
+    if (@_) {
+	if (wantarray) {
+	    return map { $a->index($_) } @_;
+	} else {
+	    return $a->index(shift(@_));
+	}
+    }
+    return $a->index($_) if defined $_;
+    die "aindex: \$_ is undefined: what are you indexing?\n";
+}
+
+sub aslice {
+    my $P = shift;
+    my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
+		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
+
+    $a->set_greedy(); # The *first* match, thank you.
+
+    if (@_) {
+	return map { [ $a->slice($_) ] } @_;
+    }
+    return $a->slice($_) if defined $_;
+    die "aslice: \$_ is undefined: what are you slicing?\n";
 }
 
 1;
@@ -366,6 +416,13 @@ means I<ignore case>, I<allow every fourth character to be "an edit">,
 but allow I<no substitutions>.  (See L<NOTES> about disallowing
 substitutions or insertions.)
 
+The starting and ending positions of matching can be changed from the
+beginning and end of the input(s) to some other positions by using
+the modifiers
+
+	"initial_position=24"
+	"final_position=42"
+
 =head1 SUBSTITUTE
 
 	use String::Approx 'asubstitute';
@@ -385,7 +442,69 @@ arguments are as in C<amatch()>, plus one additional modifier, C<"g">
 which means substitute globally (all the matches in an element and not
 just the first one, as is the default).
 
+The starting and ending positions of substitution can be changed from
+the beginning and end of the input(s) to some other positions by using
+the modifiers
+
+	"initial_position=24"
+	"final_position=42"
+
 See L<BAD NEWS> about the unfortunate stinginess of C<asubstitute()>.
+
+=head1 INDEX
+
+	use String::Approx 'aindex';
+
+	$index   = aindex("pattern")
+	@indices = aindex("pattern", @inputs)
+	$index   = aindex("pattern", [ modifiers ])
+	@indices = aindex("pattern", [ modifiers ], @inputs)
+
+Like C<amatch()> but returns the index/indices at which the pattern
+matches approximately.  In list context and if C<@inputs> are used,
+returns a list of indices, one index for each input element.
+If there's no approximate match, C<-1> is returned as the index.
+
+The starting and ending positions of indexing can be changed from
+the beginning and end of the input(s) to some other positions by using
+the modifiers
+
+	"initial_position=24"
+	"final_position=42"
+
+=head1 SLICE
+
+	use String::Approx 'aindex';
+
+	($index, $size)   = aslice("pattern")
+	([$i0, $s0], ...) = aslice("pattern", @inputs)
+	($index, $size)   = aslice("pattern", [ modifiers ])
+	([$i0, $s0], ...) = aslice("pattern", [ modifiers ], @inputs)
+
+Like C<aindex()> but returns also the size of the match.  If the
+match fails, returns an empty list (when matching against C<$_>) or
+an empty anonymous list corresponding to the particular input.
+
+Note that the size of the match will very probably be something
+you did not expect (such as longer than the pattern).  This may
+or may not be fixed in future releases.
+
+If the modifier
+
+	"minimal_distance"
+
+is used, the minimal possible edit distance is returned as the
+third element:
+
+	($index, $size, $distance) = aslice("pattern", [ modifiers ])
+	([$i0, $s0, $d0], ...)     = aslice("pattern", [ modifiers ], @inputs)
+
+The starting and ending positions of slicing can be changed from
+the beginning and end of the input(s) to some other positions by using
+the modifiers
+
+	"initial_position=24"
+	"final_position=42"
 
 =head1 NOTES
 
@@ -413,9 +532,11 @@ you need to allow at least edit distance of two because in terms of
 our edit primitives a transpose is one first deletion and then one
 insertion.
 
+There's no backwards-scanning 'arindex'.
+
 =head1 VERSION
 
-3.0.
+Major release 3.
 
 =head1 CHANGES FROM VERSION 2
 
@@ -464,12 +585,12 @@ there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 
 =head1 ACKNOWLEDGEMENTS
 
-The following people provided with valuable test cases and other feedback:
-Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij Frishman,
-Lars Gregersen, Kevin Greiner, Ricky Houghton, Helmut Jarausch, Mark
-Land, Sergey Novoselov, Andy Oram, Stewart Russell, Slaven Rezic,
-Chris Rosin, Ilya Sandler, Bob J.A. Schijvenaars, Greg Ward,
-Rick Wise.
+The following people have provided with valuable test cases and other
+feedback: Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij
+Frishman, Lars Gregersen, Kevin Greiner, Mike Hanafey, Ricky Houghton,
+Helmut Jarausch, Mark Land, Sergey Novoselov, Andy Oram, Stewart
+Russell, Slaven Rezic, Chris Rosin, Ilya Sandler, Bob
+J.A. Schijvenaars, Greg Ward, Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.
