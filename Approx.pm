@@ -1,375 +1,631 @@
 package String::Approx;
 
-require 5;
-
-require Exporter;
-
-use Carp;
-
-@ISA = qw(Exporter);
-@EXPORT_OK = qw(amatch asubstitute);
-
-my $debug = 0;
-
 =head1 NAME
 
-String::Approx - approximate matching and substitution
+String::Approx - match and substitute approximately (aka fuzzy matching)
 
 =head1 SYNOPSIS
 
 	use String::Approx qw(amatch asubstitute);
 
-	# amatch() and asubstitute imported to the current namespace,
-	# by default _nothing_ is imported
-
 =head1 DESCRIPTION
 
-C<String::Approx> is a Perl module for matching and substituting
-strings in a fuzzy way - approximately.
+B<Approximate> is defined here as I<k-differences>.  One I<difference>
+is an insertion, a deletion, or a substitution of one character.
+The I<k> in the I<k-differences> is the maximum number of differences.
+
+For example I<1-difference> means that a match is found if there is
+one character too many (insertion) or one character missing (deletion)
+or one character changed (substitution).  Those are I<exclusive or>s:
+that is, I<not> one of each type of modification but I<exactly one>.
+
+=head2 The default approximateness
+
+The default approximateness is I<10 %> of the length of the
+approximate pattern or I<at least 1>: I<0-differences> being the exact
+matching which can be done very effectively using the usual Perl
+function C<index()> or normal regular expression matching.
 
 =head2 amatch
 
-	amatch($approximate_string[, ...]);
+	use String::Approx qw(amatch);
 
-All the other amatch() arguments are optional except the
-$approximate_string itself.
+	amatch("PATTERN");
+	amatch("PATTERN", @LIST);
+	amatch("PATTERN", [ @MODS ]);
+	amatch("PATTERN", [ @MODS ], @LIST);
 
-The additional parameters are strings of any the forms:
+The PATTERN is B<a string>, not a regular expression.  The regular
+expression metanotation (C<. ? * + {...,...} ( ) | [ ] ^ $ \w ...>)
+will be understood as literal characters, that is, a C<*> means in
+regex terms C<\*>, not I<"match 0 or more times">.
 
-	number		e.g. '1', the maximum number of transformations
-			for all the transformation types,
-			the types being insert/delete/substitute
+The LIST is the list of strings to match against the pattern.
+If no LIST is given matches against C<$_>.
 
-	number%		e.g. '15%', the relative maximum number of
-			all the transformations is 15% of the
-			approximating string
+The MODS are the modifiers that tell how approximately to match.
+See below for more detailed explanation.
+B<NOTE>: The syntax really is C<[ @MODS ]>, the square
+brackets C<[ ]> must be in there.  See below for examples.
 
-	[IDS]number	e.g. 'I2', the maximum number of insertions
+In scalar context C<amatch()> returns the number of successful
+substitutions.  In list context C<amatch()> returns the strings that
+had substitutions.
 
-	[IDS]number%	e.g. 'D20%', the relative maximum number of
-			deletions is 20% of the length of the
-			approximating string
-
-	[gimosx]	e.g. 'im', the usual m// modifiers
-
-The default is parameter '10%'. Two noteworthy points:
-
-	the relative amounts, especially the default 10%,
-	would often result in number of allowed 'errors' being
-	less than 1. this, however, does not happen. internally
-	the minimum is forced to be 1.
-	(0 can be and must be explicitly asked for)
-
-	the relative amounts are rounded to the nearest whole
-	number in the standard way, e.g. 10% of 15 will end up
-	being 2.
-
-You can combine all the number parameter types into a single string,
-e.g. '15%i2'.
-
-An example:
+Example:
 
 	use String::Approx qw(amatch);
 
 	open(WORDS, '/usr/dict/words') or die;
 
 	while (<WORDS>) {
-	  print if amatch('perl');
+	    print if amatch('perl');
 	}
 
-=head2 asubstitute
+or the same ignoring case:
 
-	asubstitute($approximate_string, $substitute[, ...]);
-
-Otherwise identical parameters with amatch() except that the
-second argument is the substitution string, $substitute.
-
-One can use in the substitution string the special marker C<$&> that
-represents the approximately matched string.
-
-An example:
-
-	use String::Approx qw(asubstitute);
+	use String::Approx qw(amatch);
 
 	open(WORDS, '/usr/dict/words') or die;
 
 	while (<WORDS>) {
-	  print if asubstitute('perl', '<$&>);
+	    print if amatch('perl', ['i']);
 	}
 
-=head1 RETURN VALUES
+=head2 asubstitute
 
-In scalar context amatch() and asubstitute() return the number of
-possible matches and substitutions. In list context they return the
-list all the possible matches and substitutions. Note that in the case
-of asubstitute() the list of possible substitutions may be longer than
-the list of done substitutions because possible substitutions may overlap.
-The first and the longest substitutions are done first, the rest are done
-if they do not overlap the already one substitutions.
+	use String::Approx qw(asubstitute);
 
-As a side-effect asubstitute() may change the value of $_ if approximate
-matches are found.
+	asubstitute("PATTERN", "SUBSTITUTION");
+	asubstitute("PATTERN", "SUBSTITUTION", @LIST);
+	asubstitute("PATTERN", "SUBSTITUTION", [ @MODS ]);
+	asubstitute("PATTERN", "SUBSTITUTION", [ @MODS ], @LIST);
 
-Note that error messages and warnings come from amatch(), not from
-asubstitute().
+The PATTERN is B<a string>, not a regular expression.  The regular
+expression metanotation (C<. ? * + {...,...} ( ) | [ ] ^ $ \w ...>)
+will be understood as literal characters, that is, a C<*> means in
+regex terms C<\*>, not I<"match 0 or more times">.
 
-=head2 More Examples
+Also the SUBSTITUTION is B<a string>, not a regular expression.  Well,
+mostly.  I<Most of the> regular expression metanotation (C<.>, C<?>,
+C<*>, C<+>, ...) will be not understood as literal characters, that
+is, a C<*> means in regex terms C<\*>, not I<"match 0 or more times">.
+The understood notations are
 
-	amatch($s);		# the maximum amount of approximateness
-				# is max(1,10_%_of_length($s))
-	amatch($s, 1);		# the maximum number of any
-				# insertions/deletes/substitutions
-				# (_separately_) is 1
-	amatch($s, 'I1D0S30%');	# the maximum amount for insertions is 1,
-	       			# deletions are not allowed, the maximum
-				# amount of substitutions
-				# is max(1,5_%_of_length($s))
+=over 8
 
-	asubstitute($s, '($&)', 'g');
-				# surround in $_ all ('g') the approximate
-				# matches by parentheses
+=item	C<$`>
 
-	asubstitute($s, '&func', 'e');
-				# substitute in $_ the first approximate
-				# match with the result of &func (without
-				# the 'e' literal string '&func' would be
-				# the substitute)
+the part I<before> the approximate match
 
+=item	C<$&>
 
-=head1 LIMITATIONS
+the approximately matched part
 
-B<You cannot mix approximate matching and normal Perl regular
-expressions (see perlre).  Please do not even think about it>.
+=item	C<$'>
 
-Do B<not> use characters C<.?*+{}[](|)^$\> (that is, any characters
-that have special meaning in regular expressions) in your approximate
-strings.
+the part I<after> the approximate match
 
-Matching and substitution are always done on $_. The =~ binding
-operator (see perlop) can only be used with the Perl builtins m//,
-s///, and tr///, not for user-defined functions such as amatch().
+=back
 
-The C<agrep> B<is> faster. Searching for C<'perl'> with one each [IDS]
-allowed from a wordlist of 25486 words took with C<amatch()> 656
-seconds on a RISC box while C<agrep> took 0.77 seconds. This is mainly
-because C<String::Approx> does the same things with an interpreted
-language, Perl, whereas agrep does it in compiled, language, C, and
-because doing approximate matching is very demanding operation,
-especially the substitutions.  C<String::Approx> does it by (ab)using
-regular expressions which is quite wasteful, approximate matching
-should be built in Perl for it to be fast.  The time taken by the
-insertion operation, I<I>, is about 30%, by the deletion, I<D>, about
-20%, and by the substitution, I<S>, about 50%.  (In case you are
-wondering, yes, agrep and amatch() did agree on the list of matching
-words)
+The MODS are the modifiers that tell how approximately to match.
+See below for more detailed explanation.
+B<NOTE>: Yes, the syntax is really C<[ @MODS ]>, the square
+brackets C<[ ]> must be in there.  See below for examples.
+
+The LIST is the list of strings to substitute against the pattern.
+If no LIST is given substitutes against C<$_>.
+
+In scalar context C<asubstitute()> returns the number of successful
+substitutions.  In list context C<asubstitute()> returns the strings
+that had substitutions.
+
+Examples:
+
+	use String::Approx qw(asubstitute);
+
+	open(WORDS, '/usr/dict/words') or die;
+	while (<WORDS>) {
+	    print if asubstitute('perl', '($&)');
+	}
+
+or the same ignoring case:
+
+	use String::Approx qw(asubstitute);
+
+	open(WORDS, '/usr/dict/words') or die;
+	while (<WORDS>) {
+	    print if asubstitute('perl', '($&)', [ 'i' ]);
+	}
+
+=head2 Modifiers
+
+The MODS argument both in amatch() and asubstitute() is a list of
+strings that control the matching of PATTERN.  The first two, B<i> and
+B<g>, are the usual regular expression match/substitute modifiers, the
+rest are special for approximate matching/substitution.
+
+=over 8
+
+=item	i
+
+Match/Substitute ignoring case, case-insensitively.
+
+=item	g
+
+Substitute I<globally>, that is, all the approximate matches, not just
+the first one.
+
+=item	I<k>
+
+The maximum number of differences.
+For example 2.
+
+=item	II<k>
+
+The maximum number of insertions.
+For example 'I2'.
+
+=item	DI<k>
+
+The maximum number of deletions.
+For example 'D2'.
+
+=item	SI<k>
+
+The maximum number of substitutions.
+For example 'S2'.
+
+=item	I<k>%
+
+The maximum relative number of differences.
+For example '10%'.
+
+=item	II<k>%
+
+The maximum relative number of insertions.
+For example 'I5%'.
+
+=item	DI<k>%
+
+The maximum relative number of deletions.
+For example 'D5%'.
+
+=item	SI<k>%
+
+The maximum relative number of substitutions.
+For example 'S5%'.
+
+=back
+
+I<The regular expression modifiers> C<o m s x> I<are> B<not supported>
+because their definitions for approximate matching are less than clear.
+
+The relative number of differences is relative to the length of the
+PATTERN, rounded up: if, for example, the PATTERN is C<'bouillabaise'>
+and the MODS is C<['20%']> the I<k> becomes I<3>.
+
+If you want to B<disable> a particular kind of difference you need
+to explicitly set it to zero: for example C<'D0'> allows no deletions.
+
+In case of conflicting definitions the later ones silently override,
+for example:
+
+	[2, 'I3', 'I1']
+
+equals
+
+	['I1', 'D2', 'S2']
+
+=head1 EXAMPLES
+
+The following examples assume the following template:
+
+	use String::Approx qw(amatch asubstitute);
+
+	open(WORDS, "/usr/dict/words") or die;
+	while (<WORDS>) {
+		# <---
+	}
+
+and the following examples just replace the above 'C<# E<lt>--->' line.
+
+=head2 Matching from the C<$_>
+
+=over 8
+
+=item Match 'perl' with one difference
+
+	print if amatch('perl');
+
+The I<one difference> is automatically the result in this case because
+first the rule of the I<10 %> of the length of the pattern ('C<perl>')
+is used and then the I<at least 1> rule.
+
+=item Match 'perl' with case ignored
+
+	print if amatch('perl', [ 'i' ]);
+
+The case is ignored in matching (C<i>).
+
+=item Match 'perl' with one insertion
+
+	print if amatch('perl', [ '0', 'I1' ]);
+
+The I<one insertion> is easiest achieved with first disabling any
+approximateness (C<0>) and then enabling one insertion (C<I1>).
+
+=item Match 'perl' with zero deletions
+
+	print if amatch('perl', [ 'D0' ]);
+
+The I<zero deletion> is easily achieved with simply disabling any
+deletions (C<D0>), the other types of differences, the insertions and
+substitutions, are still enabled.
+
+=item Substitute 'perl' approximately with HTML emboldening
+
+	print if amatch('perl', '<B>$&</B>', [ 'g' ]);
+
+All (C<g>) of the approximately matching parts of the input are
+surrounded by the C<HTML> emboldening markup.
+
+=back
+
+=head2 Matching from a list
+
+The above examples match against the default variable B<$_>.
+The rest of the examples show how the match from a list.
+The template is now:
+
+	use String::Approx qw(amatch asubstitute);
+
+	open(WORDS, "/usr/dict/words") or die;
+	@words = <words>;
+	# <---
+
+and the examples still go where the 'C<# E<lt>--->' line is.
+
+=item Match 'perl' with one difference from a list
+
+	@matched = amatch('perl', @words);
+
+The C<@matched> contains the elements of the C<@words> that matched
+approximately.
+
+=item Substitute 'perl' approximately with HTML emphasizing from a list
+
+	@substituted = asubstitute('perl', '<EM>$&</EM>', [ 'g' ], @words);
+
+The C<@substituted> contains B<with all> (C<g>) B<the substitutions>
+the elements of the C<@words> that matched approximately.
+
+=back
 
 =head1 VERSION
 
-v1.6
+Version 2.0.
+
+=head1 LIMITATIONS
+
+=head2 Fixed Pattern
+
+The PATTERNs of C<amatch()> and C<asubstitute()> are fixed strings,
+they are not regular expressions.  The I<SUBSTITUTION> of
+C<asubstitute()> is a bit more flexible than that but not by much.
+
+=head2 Speed
+
+I<Despite the about 20-fold speed increase> from the C<String::Approx>
+I<version 1> B<agrep is still faster>.  If you do not know what
+C<agrep> is: it is a program like the UNIX grep but it knows, among
+other things, how to do approximate matching.  C<agrep> is still about
+30 times faster than I<Perl> + C<String::Approx>.  B<NOTE>: all these
+speeds were measured in one particular system using one particular set
+of tests: your mileage will vary.
+
+=head2 Incompatibilities with C<String::Approx> I<v1.*>
+
+If you have been using regular expression modifiers (B<i>, B<g>) you
+lose.  Sorry about that.  The syntax simply is not compatible.  I had
+to choose between having C<amatch()> match and C<asubstitute()>
+substitute elsewhere than just in $_ I<and> the old messy way of
+having an unlimited number of modifiers.  The first need won.
+
+B<There is a backward compability mode>, though, if you do not want to
+change your C<amatch()> and C<asubstitute()> calls.  You B<have> to
+change your C<use> line, however:
+
+	use String::Approx qw(amatch compat1);
+
+That is, you must add the C<compat1> symbol if you want to be
+compatible with the C<String::Approx> version 1 call syntax.
 
 =head1 AUTHOR
 
-Jarkko Hietaniemi, C<jhi@iki.fi>
+Jarkko Hietaniemi C<E<lt>jhi@iki.fiE<gt>>
+
+=head1 ACKNOWLEDGEMENTS
+
+Nathan Torkington C<E<lt>gnat@frii.comE<gt>>
 
 =cut
 
-%R = (); # cache for the approximate matching regexps
-@L = (); # cache for the length expressions
+require 5;
 
-$R = 20;
+use strict;
+$^W = 1;
 
-sub flushR {
-  %R = ();
+use vars qw($PACKAGE $VERSION $compat1
+	    @ISA @EXPORT_OK
+	    %M %S @aL @dL);
+
+$PACKAGE = 'String::Approx';
+$VERSION = '2.0';
+
+$compat1 = 0;
+
+require Exporter;
+
+@ISA = qw(Exporter);
+
+@EXPORT_OK = qw(amatch asubstitute);
+
+# Catch the 'compat1' tag.
+
+sub import {
+    my $this = shift;
+    my (@list, $sym);
+    for $sym (@_) { $sym eq 'compat1' ? $compat1 = 1 : push(@list, $sym) }
+    local $Exporter::ExportLevel = 1; 
+    Exporter::import($this, @list);
 }
 
-sub R {
-  if (@_ == 2) {
-    $R{$_[0]}->{$_[1]};
-  } else {
-    flushR() if (scalar keys %R > $R);
-    $R{$_[0]}->{$_[1]} = $_[2];
-  }
-}
+sub _compile {
+    my ($pattern, $I, $D, $S) = @_;
 
-sub L {
-  @_ == 1 ? $L[$_[0]] : ($L[$_[0]]  = $_[1]);
-}
+    my ($i, $d, $s) = ($I, $D, $S);
+    my ($j, $p, %p, %q, $l, $k);
 
-use strict qw(subs vars);
+    $p{$pattern} = '';
 
-sub _pct {
-  my ($s, $p) = @_;
-  my $fuzz = int($p * length($s) + .5);
+    while ($i or $d or $s) {
 
-  $fuzz > 1 ? $fuzz : 1;
-}
+	for $p (keys %p) { $p{$p} = length($p) }
 
-sub _argh {
-  my ($str) = shift;
+	%q = ();
+	
+	# the insertions
 
-  croak "amatch: approximate string undefined" unless defined $str;
-
-  my ($prm, $mod, $g, $e, $ins, $del, $sbs);
-
-  $g = 0;
-  $e = 0;
-  undef $ins;
-  undef $del;
-  undef $sbs;
-  $mod = '';
-
-  while (($prm = shift) ne '') {
-    if ($prm =~ /^[egimosx]+$/) {
-      $g += $prm =~ tr/g//d;
-      $e += $prm =~ tr/e//d;
-      $mod = $prm;
-    } else {
-      while ($prm =~ s/^(?:([idr])\s*)?(\d+)(?:\s*(%))?//) {
-	my $r;
-      
-	if ($3 eq '%') {
-	  $r = _pct($str, $2/100);
-	} else {
-	  $r = $2;
+	if ($i) {
+	    $i--;
+	    for $p (keys %p) {
+		$l = $p{$p};
+		for ($j = 1; $j < $l; $j++) {
+		    $k = $p;
+		    substr($k, $j) = '.' . substr($k, $j);
+		    $q{$k} = '';
+		}
+	    }
 	}
 
-	if ($1 eq 'I') {
-	  $ins = $r;
-	} elsif ($1 eq 'D') {
-	  $del = $r;
-	} elsif ($1 eq 'S') {
-	  $sbs = $r;
-	} elsif ($1 eq '') {
-	  $ins = $del = $sbs = $r;
-	}
-      }
-    }
-    croak "unknown parameter '$prm'" if ($prm ne '');
-  }
-  
-  $ins = _pct($str, .1) unless (defined $ins);
-  $del = _pct($str, .1) unless (defined $del);
-  $sbs = _pct($str, .1) unless (defined $sbs);
-  $mod = "($mod)" if ($mod ne '');
+	# the deletions
 
-  ($str, $mod, $g, $e, $ins, $del, $sbs);
+	if ($d) {
+	    $d--;
+	    for $p (keys %p) {
+		$l = $p{$p};
+		for ($j = 0; $j < $l; $j++) {
+		    $k = $p;
+		    substr($k, $j) = substr($k, $j + 1);
+		    $q{$k} = '';
+		}
+	    }
+	}
+
+	# the substitutions
+
+	if ($s) {
+	    $s--;
+	    for $p (keys %p) {
+		$l = $p{$p};
+		for ($j = 0; $j < $l; $j++) {
+		    $k = $p;
+		    substr($k, $j, 1) = '.';
+		    $q{$k} = '';
+		}
+	    }
+	}
+
+	@p{keys %q} = ''; # never mind the values
+    }
+
+    # the substitution pattern
+
+    $S{$pattern}[$I][$D][$S] =
+	join('|',
+	     sort {
+		 my $cmp;
+		 # longer
+		 return $cmp if $cmp = (length($b)      <=> length($a));
+		 # more exact
+		 return $cmp if $cmp = (($a =~ tr/././) <=> ($b =~ tr/././));
+		 # never mind
+	     } keys %p);
+
+    # for amatch() drop the ones with leading or trailing '.'
+    # they do not give any more matches.  for asubstitute() this
+    # cannot be done because we want the longest possible matches.
+
+    my (%m, $m);
+
+    for $m (keys %p) { $m{$m} = '' unless $m =~ /^\./ or $m =~ /\.$/ }
+
+    $M{$pattern}[$I][$D][$S] =
+	join('|',
+	     sort {
+		 my $cmp;
+		 # longer
+		 return $cmp if $cmp = (length($b)      <=> length($a));
+		 # more approximate
+		 return $cmp if $cmp = (($b =~ tr/././) <=> ($a =~ tr/././));
+		 # never mind
+	     } keys %m);
 }
 
-sub _match {
-  my ($str, $mod, $g, $e, $ins, $del, $sbs) = _argh(@_);
-  my @m = ();
+sub _mods {
+    my ($mods, $aI, $aD, $aS, $rI, $rD, $rS) = @_;
+    my $remods = '';
+    my $mod;
 
-  if (/$mod$str/g) {
-    push(@m, [$&, pos()]);
-    return ($e, @m) unless ($g);
-  }
-
-  my @str  = split(//, $str);
-  my $size = length($str);
-  
-  carp "amatch: insertions ($ins) >= size of approximate string ($size)"
-    if ($ins >= $size);
-
-  carp "amatch: deletions ($del) >= size of approximate string ($size)"
-    if ($del >= $size);
-
-  carp "amatch: substitutions ($sbs) >= size of approximate string ($size)"
-    if ($sbs >= $size);
-
-  R($str, "I$ins", join("(.{0,$size}?)", @str))
-    if ($ins and not defined R($str, "I$ins"));
-  
-  R($str, "D$del", '('.join('', map { "$_?" } @str).')')
-    if ($del and not defined R($str, "D$del"));
-
-  R($str, "S$sbs", join('', map { "(?:($_)|.)" } @str))
-    if ($sbs and not defined R($str, "S$sbs"));
-
-  L($#str, 'length("'.join('', map { "\$$_" } 1..$size).'")')
-    unless (defined L($#str));
-
-  my $save = $_;
-  my ($pat, $len);
-  
-  if (0 and $ins) {
-    for($pat = R($str, "I$ins"), $_ = $save; /$mod$pat/g;) {
-      if ($len = eval L($#str) and $len <= $ins) {
-	push(@m, [$&, pos()]);
-	return ($e, @m) unless ($g);
-      }
+    for $mod (@$mods) {
+	while ($mod ne '') {
+	    if ($mod =~ s/^([IDS]?)(\d+)(%?)//) {
+		if ($1 ne '') {
+		    if ($3 ne '') {
+			if    ($1 eq 'I') { $$rI = 0.01 * $2 }
+			elsif ($1 eq 'D') { $$rD = 0.01 * $2 }
+			else              { $$rS = 0.01 * $2 }
+		    } else {
+			if    ($1 eq 'I') { $$aI = $2 }
+			elsif ($1 eq 'D') { $$aD = $2 }
+			else              { $$aS = $2 }
+		    }
+		} else {
+		    if ($3 ne '') {
+			$$rI = $$rD = $$rS = 0.01 * $2;
+		    } else {
+			$$aI = $$aD = $$aS = $2;
+		    }
+		}
+	    } elsif ($compat1 and $mod =~ s/^([igmsxo])//) {
+		$remods .= $1;
+	    } elsif ($mod =~ s/^([ig])//) {
+		$remods .= $1;
+	    } else {
+		die $PACKAGE, ": unknown modifier '$mod'\n";
+	    }
+	}
     }
-  }
 
-  if ($del) {
-    for ($pat = R($str, "D$del"), $_ = $save; /$mod$pat/g;) {
-      if (length($1) > $#str - $del) {
-	push(@m, [$&, pos()]);
-	return ($e, @m) unless ($g);
-      }
-    }
-  }
+    $remods;
+}
 
-  if ($sbs) {
-    my $limsbs = $#str - $sbs;
+sub _mids {
+    my ($len, $aI, $aD, $aS, $rI, $rD, $rS) = @_;
 
-    for ($pat = R($str, "S$sbs"), $_ = $save; /$mod$pat/g;) {
-      if (($len = eval L($#str)) > $limsbs) {
-	push(@m, [$&, pos()]);
-	return ($e, @m) unless ($g);
-      }
-      pos() = pos() - $size; # backtrack
-      pos() = pos() + (/^([^$str]+)/g ? length($1) : 1); # forward skip
-    }
-  }
+    my $r = int(0.1 * $len + 0.9);
 
-  if (@m) {
-    # start positions more interesting than end positions
-    for (@m) { $$_[1] = $$_[1] - length($$_[0]) }
-    if (@m > 1) { # need a sort?
-      my $cmp;
+    if    (    defined $rI) { $aI = int($rI * $len) }
+    elsif (not defined $aI) { $aI = $r }
 
-      no strict; # $a and $b of sort() confuse strict var
-      @m = sort {
-	$cmp = $$a[1] <=> $$b[1]; # primary key: start positions
-	return $cmp if ($cmp);
-	length($$b[0]) <=> length($$a[0]) # secondary key: longer first
-	} @m;
-      use strict;
-    }
-  }
+    if    (    defined $rD) { $aD = int($rD * $len) }
+    elsif (not defined $aD) { $aD = $r }
 
-  ($e, @m);
+    if    (    defined $rS) { $aS = int($rS * $len) }
+    elsif (not defined $aS) { $aS = $r }
+
+    ($aI, $aD, $aS);
 }
 
 sub amatch {
-  my ($e, @m) =  _match(@_);
+    my ($pattern, @list) = @_;
+    my ($aI, $aD, $aS, $rI, $rD, $rS);
 
-  wantarray() ? map { $$_[0] } @m : @m;
+    my $len = length($pattern);
+
+    my $remods;
+
+    if ($compat1 or ref $list[0]) {
+	my $mods;
+
+	if ($compat1) {
+	    $mods = [ @list ];
+	    @list = ();
+	} else {
+	    $mods = shift(@list);
+	}
+
+	$remods = _mods($mods, \$aI, \$aD, \$aS, \$rI, \$rD, \$rS);
+
+	($aI, $aD, $aS) = _mids($len, $aI, $aD, $aS, $rI, $rD, $rS);
+    } else {
+	$dL[$len] = int(0.1 * $len + 0.9) unless $dL[$len];
+	$aI = $aD = $aS = $dL[$len];
+    }
+
+    _compile($pattern, $aI, $aD, $aS)
+	unless defined $M{$pattern}[$aI][$aD][$aS];
+
+    my $mpat = $M{$pattern}[$aI][$aD][$aS];
+
+    $mpat = '(?' . $remods . ')' . $mpat if defined $remods;
+
+    return grep /$mpat/, @list if @list;
+
+    return ($_) if /$mpat/;
+
+    ();
+}
+
+sub _subst {
+    my ($sub, $pre, $match, $post) = @_;
+
+    $sub =~ s/\$`/$pre/g;
+    $sub =~ s/\$&/$match/g;
+    $sub =~ s/\$'/$post/g;
+
+    $sub;
 }
 
 sub asubstitute {
-  my $s = splice(@_, 1, 1);
-  my ($e, @m) = _match(@_);
-  my ($i, $ne, $es, $vi, $od, @s);
+    my ($pattern, $sub, @list) = @_;
+    my ($aI, $aD, $aS, $rI, $rD, $rS);
 
-  $od = 0;
-  @s = @m;
-  while ($i = shift(@s)) {
-    $es = $s;
-    $es =~ s/\$&/$$i[0]/eg;
-    for ($ne = $e; $ne; $ne--) {
-      $es = eval $es;
-      $es =~ s/\$&/$$i[0]/eg;
+    my $len = length($pattern);
+
+    my $remods;
+
+    if ($compat1 or ref $list[0]) {
+	my $mods;
+
+	if ($compat1) {
+	    $mods = [ @list ];
+	    @list = ();
+	} else {
+	    $mods = shift(@list);
+	}
+
+	$remods = _mods($mods, \$aI, \$aD, \$aS, \$rI, \$rD, \$rS);
+
+	($aI, $aD, $aS) = _mids($len, $aI, $aD, $aS, $rI, $rD, $rS);
+    } else {
+	$dL[$len] = $len < 11 ? 1 : int(0.1 * $len) unless $dL[$len];
+	$aI = $aD = $aS = $dL[$len];
     }
-    substr($_, $$i[1] - length($s) + 1 + $od, length($$i[0])) = $es;
-    $vi = $$i[1] + length($$i[0]) + $od;
-    while (@s and $s[0][1] + $od < $vi) { shift(@s) }
-    $od += length($es) - length($$i[0]);
-  }
-  
-  wantarray() ? map { $$_[0] } @m : scalar @m;
+
+    _compile($pattern, $aI, $aD, $aS)
+	unless defined $S{$pattern}[$aI][$aD][$aS];
+
+    my $spat = $S{$pattern}[$aI][$aD][$aS];
+    
+    $spat = '(?' . $remods . ')' . $spat if defined $remods;
+
+    if (@list) {
+	my (@m, $s);
+
+	for $s (@list) {
+	    push(@m, $s) if $s =~ s/($spat)/_subst($sub, $`, $1, $')/e
+	}
+
+	return @m;
+    }
+
+    return ($_) if s/($spat)/_subst($sub, $`, $1, $')/e;
+
+    ();
 }
 
-1; # keep require happy
+1;
 
 # eof

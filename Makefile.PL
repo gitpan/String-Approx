@@ -4,5 +4,5 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'	=> 'String::Approx',
-    'VERSION'	=> '1.6'
+    'VERSION'	=> '2.0'
 );

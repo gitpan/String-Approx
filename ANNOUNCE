@@ -1,0 +1,23 @@
+String::Approx ANNOUNCE
+
+String::Approx v2.0
+
+This Perl module implements approximate matching aka fuzzy matching.
+Also the substitution operation is supported.
+
+This release should be several times faster than the previous
+major release, v1.*, of String::Approx.
+
+The call syntax of this release is not directly downward compatible
+with the previous major release but there is a backward compability
+mode available.  This change was made both because of the speed-up
+work and because of the need to match also from somewhere else than
+just the $_.  I am sorry about this change but I hope the new speed
+and features make up for the inconvenience.
+
+The new release is available from
+
+  http://www.perl.com/CPAN/modules/by-module/String/String-Approx-2.0.tar.Z
+
+-- 
+Jarkko Hietaniemi <jhi@iki.fi>

@@ -1,0 +1,20 @@
+sub t {
+    my ($a, $b) = @_;
+    my ($wa, $wb, $db);
+
+    if (@$a == @$b) {
+	for $wa (@$a) {
+	    $wb = shift(@$b);
+	    $db = defined $wb;
+	    chomp($wb) if $db;
+	    if (not $db or $wa ne $wb) {
+		print 'not ';
+		last;
+	    }
+	}
+    } else {
+	print 'not ';
+    }
+}
+
+1;

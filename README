@@ -1,18 +1,49 @@
-Hello,
+String::Approx README
 
-	this the Perl library for approximate matching.
-	It requires Perl 5.
+This Perl module implements approximate matching aka fuzzy matching.
 
-	The documentation is in pod format (see perlpod), you can
-	view it by for example
+NOTE!  This module has version 2 calling interface that is
+incompatible with the version 1.  In plain English: certain things
+that used to work with the old version do not work any more quite that
+way they used to.  Okay, you want to know anyway what has changed:
+the way modifiers ('i', '20%', 'I2') are specified in the call has
+changed.  Read on to find out why this change was made.
 
-		pod2man scanf.pm | nroff -man | more
+I am very sorry about this incompatibility but there are bonuses.
 
-	Note that the pod cocumentation should be quite readable "as is".
+	- String::Approx is now about 20 times faster than before.
+	  If you do not believe me try it out.
+	- there is now a much more natural syntax:
 
-	I hope you enjoy this little hack. If you find any bugs
-	please do not hesitate to tell me. If you feel like sending
-	me presents please do not hesitate to bribe me.
+	@matched     = amatch     ("pattern", @match_from_these);
+	@substituted = asubstitute("pattern", @substitute_in_these);
 
----
-++jhi; // jhi@hut.fi, http://www.hut.fi/~jhi/
+	  that is, you can now match/substitute from/in somewhere
+	  else than just $_.  If you leave out the target @list
+	  of amatch/asubstitute the matching is still done at $_.
+	- the modifiers?  Well, this is how you match case-insensitively:
+
+		amatch("pattern", ['i'])
+
+	  A little more writing than before, the square brackets.
+	  Read the pod documentation in Approx.pm for more details.
+
+There is a String::Approx version 1 calling interface compability mode
+to enable the old calling interface.  If you use it you cannot use the
+above match-from-an-array-instead-of-the-$_-interface.  The compability
+mode is enabled by the "compat1" tag, for exampe:
+
+		use String::Approx qw(amatch compat1);
+
+To build the kit:
+
+	perl Makefile.PL
+	make
+	make test
+
+To install the kit:
+
+	make install
+
+-- 
+Jarkko Hietaniemi <jhi@iki.fi>

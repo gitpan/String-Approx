@@ -1,4 +1,10 @@
 Approx.pm
-Makefile.PL
-MANIFEST
 README
+MANIFEST
+t/amatch.t
+t/asubst.t
+t/compat1.t
+t/t
+t/words
+Makefile.PL
+ANNOUNCE
