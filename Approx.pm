@@ -49,8 +49,8 @@ B<NOTE>: The syntax really is C<[ @MODS ]>, the square
 brackets C<[ ]> must be in there.  See below for examples.
 
 In scalar context C<amatch()> returns the number of successful
-substitutions.  In list context C<amatch()> returns the strings that
-had substitutions.
+matches.  In list context C<amatch()> returns the strings that
+had matches.
 
 Example:
 
@@ -312,22 +312,64 @@ the elements of the C<@words> that matched approximately.
 
 =item asubstitute: $_ is undefined: what are you matching against?
 
-Happen when you have nothing in $_ and try to C<amatch()> or
-C<asubstitute()>.  Perhaps you did forget the Perl option C<-n>?
+These happen when you have nothing in C<$_> and try to C<amatch()> or
+C<asubstitute()>.  Perhaps you are using the Perl option C<-e> but you
+did forget the Perl option C<-n>?
+
+=item amatch: too long pattern.
+
+This happens when the pattern is too long for matching.
+
+When matching long patterns, C<String::Approx> attempts to partition
+the match.  In other words, it tries to do the matching incrementally
+in smaller parts.
+
+If this fails the above message is shown.  Please try using shorter
+match patterns.
+
+See below for L<LIMITATIONS/Pattern length> for more detailed
+explanation why this happens.
+
+=item asubstitute: too long pattern.
+
+This happens when the pattern is too long for substituting.
+
+The partitioning scheme explained above that is used for matching long
+patterns cannot, sadly enough, be used substituting.
+
+Please try using shorter substitution patterns.
+
+See below for L<LIMITATIONS/Pattern length> for more detailed
+explanation why this happens.
 
 =back
 
 =head1 VERSION
 
-Version 2.0_01.
+Version 2.1.
 
 =head1 LIMITATIONS
 
-=head2 Fixed Pattern
+=head2 Fixed pattern
 
 The PATTERNs of C<amatch()> and C<asubstitute()> are fixed strings,
 they are not regular expressions.  The I<SUBSTITUTION> of
 C<asubstitute()> is a bit more flexible than that but not by much.
+
+=head2 Pattern length
+
+The approximate matching algorithm is B<very aggressive>.  In
+mathematical terms it is I<O(exp(n) * x**2)>. This means that
+when the pattern length and/or the approximateness grows the
+matching or substitution take much longer time and memory.
+
+For C<amatch()> this can be avoided by I<partitioning> the pattern,
+matching it in shorter subpatterns.  This makes matching a bit slower
+and a bit more fuzzier, more approximate.  For C<asubstitute()> this
+partitioning cannot be done, the absolute maximum for the substitution
+pattern length is B<19> but sometimes, for example it the approximateness
+is increased, even shorter patterns are too much.  When this happens,
+you must use shorter patterns.
 
 =head2 Speed
 
@@ -338,6 +380,8 @@ other things, how to do approximate matching.  C<agrep> is still about
 30 times faster than I<Perl> + C<String::Approx>.  B<NOTE>: all these
 speeds were measured in one particular system using one particular set
 of tests: your mileage will vary.
+
+For long patterns, more than about B<40>, the first 
 
 =head2 Incompatibilities with C<String::Approx> I<v1.*>
 
@@ -373,7 +417,7 @@ $^W = 1;
 
 use vars qw($PACKAGE $VERSION $compat1
 	    @ISA @EXPORT_OK
-	    %M %S @aL @dL);
+	    %P @aL @dL @Pl %Pp);
 
 $PACKAGE = 'String::Approx';
 $VERSION = '2.0';
@@ -396,96 +440,181 @@ sub import {
     Exporter::import($this, @list);
 }
 
+sub _estimate {
+    my ($l, $m) = @_;
+    my $p = 5 ** ($m + 2);
+
+    (3 * $p * $l ** 2 + (8 - $p) * $l - $p) / 8;
+}
+
 sub _compile {
     my ($pattern, $I, $D, $S) = @_;
+#    print STDERR "_compile(@_)\n";
+    my ($j, $p, %p, %q, $l, $k, $mxm);
+    my @p = ();
 
-    my ($i, $d, $s) = ($I, $D, $S);
-    my ($j, $p, %p, %q, $l, $k);
+    $mxm = $I;
+    $mxm = $D if ($D > $mxm);
+    $mxm = $S if ($S > $mxm);
 
-    $p{$pattern} = '';
+    $l = length($pattern);
 
-    while ($i or $d or $s) {
+#    print "mxm = $mxm, l = $l\n";
 
-	for $p (keys %p) { $p{$p} = length($p) }
+    # the estimated length of the resulting pattern must be less than 32767
 
-	%q = ();
+    my $est = _estimate($l, $mxm);
+
+    if ($est > 32767) {
+	my ($a, $b, $i);
+	my $mp;
+
+#	print "est = $est\n";
+
+	# compute and cache the partitions per length
+
+	unless (defined $Pl[$l][$mxm]) {
+	    my ($np, $sp, $fp, $gp);
+
+	    $np = int(log($l)) + 1;
+	    $np = 2 if ($np < 2);
+	    $sp = int($l / $np);
+	    $fp = $l - $np * $sp;
+	    $gp = $sp + $fp;
+	    $mp = int($mxm / $np);
+	    $mp = 1 if ($mp < 1);
+
+#	    print "  np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
+
+	    $est = _estimate($gp, $mp);
+
+#	    print "  est = $est\n";
+
+	    while ($est > 32767) {
+		# same rule here as above about the length of the pattern.
+		$sp--;
+		$np = int($l / $sp);
+		$fp = $l - $np * $sp;
+		$gp = $sp + $fp;
+		$mp = int($mxm / $np);
+		$mp = 1 if ($mp < 1);
+#		print "    np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
+		$est = _estimate($gp, $mp);
+#		print "  est = $est\n";
+	    }
+
+	    ($a, $b) = (0, $sp + $fp);
+	    push(@{$Pl[$l][$mxm]}, [$a, $b]);
+	    $a += $fp;
+	    $b  = $sp;
+	    for ($i = 1; $i < $np; $i++) {
+		$a += $sp;
+#		print "a = $a, b = $b\n";
+		push(@{$Pl[$l][$mxm]}, [$a, $b]);
+	    }
+	}
+
+	my $pi = $I ? int($mp / $I + 0.9) : 0;
+	my $pd = $D ? int($mp / $D + 0.9) : 0;
+	my $ps = $S ? int($mp / $S + 0.9) : 0;
+
+	# compute and cache the pattern partitions
+
+	unless (defined $Pp{$pattern}[$mxm]) {
+	    for $i (@{$Pl[$l][$mxm]}) {
+		push(@{$Pp{$pattern}[$mxm]},
+		     [substr($pattern, $$i[0], $$i[1]), $pi, $pd, $ps]);
+	    }
+	}
+
+	@p = @{$Pp{$pattern}[$mxm]};
 	
-	# the insertions
-
-	if ($i) {
-	    $i--;
-	    for $p (keys %p) {
-		$l = $p{$p};
-		for ($j = 1; $j < $l; $j++) {
-		    $k = $p;
-		    substr($k, $j) = '.' . substr($k, $j);
-		    $q{$k} = '';
-		}
-	    }
-	}
-
-	# the deletions
-
-	if ($d) {
-	    $d--;
-	    for $p (keys %p) {
-		$l = $p{$p};
-		for ($j = 0; $j < $l; $j++) {
-		    $k = $p;
-		    substr($k, $j) = substr($k, $j + 1);
-		    $q{$k} = '';
-		}
-	    }
-	}
-
-	# the substitutions
-
-	if ($s) {
-	    $s--;
-	    for $p (keys %p) {
-		$l = $p{$p};
-		for ($j = 0; $j < $l; $j++) {
-		    $k = $p;
-		    substr($k, $j, 1) = '.';
-		    $q{$k} = '';
-		}
-	    }
-	}
-
-	@p{keys %q} = ''; # never mind the values
+    } else {
+	push(@p, [$pattern, $I, $D, $S]);
     }
 
-    # the substitution pattern
+    my $i0 = 1;		# The start index for the insertions.
 
-    $S{$pattern}[$I][$D][$S] =
-	join('|',
-	     sort {
-		 my $cmp;
-		 # longer
-		 return $cmp if $cmp = (length($b)      <=> length($a));
-		 # more exact
-		 return $cmp if $cmp = (($a =~ tr/././) <=> ($b =~ tr/././));
-		 # never mind
-	     } keys %p);
+    my $pp;		# The current partition.
 
-    # for amatch() drop the ones with leading or trailing '.'
-    # they do not give any more matches.  for asubstitute() this
-    # cannot be done because we want the longest possible matches.
+    for $pp (@p) {	# The partition loop.
 
-    my (%m, $m);
+	%p = ();
 
-    for $m (keys %p) { $m{$m} = '' unless $m =~ /^\./ or $m =~ /\.$/ }
+	my ($i, $d, $s) = @$pp[1..4];	# The per-partition I, D, S.
 
-    $M{$pattern}[$I][$D][$S] =
-	join('|',
-	     sort {
-		 my $cmp;
-		 # longer
-		 return $cmp if $cmp = (length($b)      <=> length($a));
-		 # more approximate
-		 return $cmp if $cmp = (($b =~ tr/././) <=> ($a =~ tr/././));
-		 # never mind
-	     } keys %m);
+	$pp = $$pp[0];			# The partition string itself.
+
+#	print STDERR "$pp $i $d $s\n";
+
+	$p{$pp} = length($pp);
+
+	while ($i or $d or $s) {
+
+	    %q = ();
+	
+	    # the insertions
+
+	    if ($i) {
+		$i--;
+		while (($p, $l) = each %p) {
+		    my $lp1 = $l + 1;
+
+		    for ($j = $i0; $j < $l; $j++) {
+			$k = $p;
+			substr($k, $j) = '.' . substr($k, $j);
+			$q{$k} = $lp1;
+		    }
+		}
+
+		# After the first partition we want one insertion
+		# before every partition - at index 0.  $i0 was
+		# initialized before the partition loop as 1 and
+		# thus the first partition does not get the one insertion
+		# in front of it.
+
+		$i0 = 0;
+	    }
+
+	    # the deletions
+
+	    if ($d) {
+		$d--;
+		while (($p, $l) = each %p) {
+		    if ($l) {
+			my $lm1 = $l - 1;
+
+			for ($j = 0; $j < $l; $j++) {
+			    $k = $p;
+			    substr($k, $j) = substr($k, $j + 1);
+			    $q{$k} = $lm1;
+			}
+		    }
+		}
+	    }
+
+	    # the substitutions
+
+	    if ($s) {
+		$s--;
+		while (($p, $l) = each %p) {
+		    for ($j = 0; $j <= $l; $j++) {
+			$k = $p;
+			substr($k, $j, 1) = '.';
+			$q{$k} = $l;
+		    }
+		}
+	    }
+
+	    while (($k, $l) = each %q) { $p{$k} = $l }
+	}
+
+	# the pattern
+
+	push(@{$P{$pattern}[$I][$D][$S]},
+	     join('|', sort { length($b) <=> length($a) } keys %p));
+
+    }
 }
 
 sub _mods {
@@ -523,7 +652,7 @@ sub _mods {
 	}
     }
 
-    $remods;
+    $remods ne '' ? $remods : undef;
 }
 
 sub _mids {
@@ -569,21 +698,100 @@ sub amatch {
 	$aI = $aD = $aS = $dL[$len];
     }
 
-    _compile($pattern, $aI, $aD, $aS)
-	unless defined $M{$pattern}[$aI][$aD][$aS];
-
-    my $mpat = $M{$pattern}[$aI][$aD][$aS];
-
-    $mpat = '(?' . $remods . ')' . $mpat if defined $remods;
-
-    return grep /$mpat/, @list if @list;
-
     die "amatch: \$_ is undefined: what are you matching against?\n"
-	unless defined $_;
+	if (not defined $_ and @list == 0);
 
-    return ($_) if /$mpat/;
+    _compile($pattern, $aI, $aD, $aS)
+	unless ref $P{$pattern}[$aI][$aD][$aS];
 
-    ();
+    my @mpat = @{$P{$pattern}[$aI][$aD][$aS]};
+    my $mpat;
+
+    # match against the @list
+
+    if (@mpat == 1) {
+
+	# the simple non-partitioned match
+
+	$mpat = $mpat[0];
+
+	$mpat = '(?' . $remods . ')' . $mpat if defined $remods;
+
+#	print STDERR "mpat = $mpat\n";
+
+	if (@list) {
+
+	    # match against the @list
+
+	    my @m = eval { grep /$mpat/, @list };
+	    die "amatch: too long pattern.\n"
+		if ($@ =~ /regexp too big/);
+	    return @m;
+	}
+
+	# match against the $_
+
+	my $m;
+
+	eval { $m = /$mpat/ };
+	die "amatch: too long pattern.\n"
+	    if ($@ =~ /regexp too big/);
+	return ($_) if $m;
+
+    } else {
+
+	# the partitioned match
+
+	if (@list) {
+
+	    # match against the @list
+
+	    my @pos = ();
+	    my @bad = ();
+	    my ($i, $bad);
+
+	    for $mpat (@mpat) {
+		if (@pos) {
+		    for $i (@list) {
+			pos($i) = shift(@pos);
+		    }
+		} else {
+		    @pos = ();
+		}
+		for ($i = $bad = 0; $i < @list; $i++) {
+		    unless ($bad[$i]) {
+			if (eval { $list[$i] =~ /$mpat/g }) {
+			    die "amatch: too long pattern.\n"
+				if ($@ =~ /regexp too big/);
+			    $pos[$i] = pos($list[$i]);
+			} else {
+			    $bad[$i] = $bad++;
+			    return () if $bad == @list;
+			}
+		    }
+		}
+	    }
+	    
+	    my @got = ();
+
+	    for ($i = 0; $i < @list; $i++) {
+		push(@got) unless $bad[$i];
+	    }
+
+	    return @got;
+	}
+	
+	# match against the $_
+
+	while ($mpat = shift(@mpat)) {
+	    return () unless eval { /$mpat/g };
+	    die "amatch: too long pattern.\n"
+		if ($@ =~ /regexp too big/);
+	    return ($_) if (@mpat == 0);
+	}
+    }
+
+    return ();
 }
 
 sub _subst {
@@ -622,18 +830,25 @@ sub asubstitute {
 	$aI = $aD = $aS = $dL[$len];
     }
 
-    _compile($pattern, $aI, $aD, $aS)
-	unless defined $S{$pattern}[$aI][$aD][$aS];
+    die "asubstitute: \$_ is undefined: what are you matching against?\n"
+	if (not defined $_ and @list == 0);
 
-    my $spat = $S{$pattern}[$aI][$aD][$aS];
+    _compile($pattern, $aI, $aD, $aS)
+	unless defined $P{$pattern}[$aI][$aD][$aS];
+
+    my @spat = @{$P{$pattern}[$aI][$aD][$aS]};
+    my $spat = $spat[0];
     
     $spat = '(?' . $remods . ')' . $spat if defined $remods;
 
     if (@list) {
-	my (@m, $s);
+	my (@m, $sm, $s);
 
-	for $s (@list) {
-	    push(@m, $s) if $s =~ s/($spat)/_subst($sub, $`, $1, $')/e
+	for $sm (@list) {
+	    eval { $s = $sm =~ s/($spat)/_subst($sub, $`, $1, $')/e };
+	    die "asubstitute: too long pattern, maximum pattern length 19.\n"
+		if ($@ =~ /regexp too big/);
+	    push(@m, $sm) if ($s);
 	}
 
 	return @m;
@@ -642,7 +857,12 @@ sub asubstitute {
     die "asubstitute: \$_ is undefined: what are you matching against?\n"
 	unless defined $_;
 
-    return ($_) if s/($spat)/_subst($sub, $`, $1, $')/e;
+    my $s;
+
+    eval { $s = s/($spat)/_subst($sub, $`, $1, $')/e };
+    die "asubstitute: too long pattern, maximum pattern length 19.\n"
+	if ($@ =~ /regexp too big/);
+    return ($_) if $s;
 
     ();
 }

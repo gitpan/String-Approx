@@ -4,7 +4,7 @@ chdir('t') or die "could not chdir to 't'";
 
 require 't'; # har har
 
-print "1..7\n";
+print "1..10\n";
 
 # test 1
 
@@ -56,8 +56,11 @@ open(WORDS, 'words') or die;
 t(
   [qw(
       appeal
+      hyperbola
+      merlin
       parlance
       pearl
+      perk
       superappeal
       superlative
      )],
@@ -149,8 +152,30 @@ close(WORDS);
 
 undef $_;
 eval 'amatch("foo")';
-print "# $@";
 print 'not ' unless ($@ =~ /what are you matching against/);
 print "ok 7\n";
+$_ = 'foo'; # anything defined so later tests do not fret
+
+# test 8: test just for acceptance of a very long pattern
+
+amatch("abcdefghij" x 10);
+print "ok 8\n";
+
+# test 9: test long pattern matching
+
+$_ = 'xyz' x 10 . 'abc0defghijabc1defghij' . 'zyx' x 10;
+print 'not ' unless amatch('abcdefghij' x 2);
+print "ok 9\n";
+
+# test 10: test long pattern NOT matching
+# NOTE: this shows the weirdness of long pattern matching:
+# compare this with the test #9.  You will notice that
+# the only difference is that the test fails if both the
+# mutations are in the same partition but succeeds when
+# mutations are in different partitions.
+
+$_ = 'xyz' x 10 . 'abc0de1fghijabcdefghij' . 'zyx' x 10;
+print 'not ' if amatch('abcdefghij' x 2);
+print "ok 10\n";
 
 # eof

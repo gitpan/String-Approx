@@ -2,17 +2,21 @@ sub t {
     my ($a, $b) = @_;
     my ($wa, $wb, $db);
 
+#    print STDERR "t: a: @$a\n";
+#    print STDERR "t: b: @$b\n";
     if (@$a == @$b) {
 	for $wa (@$a) {
 	    $wb = shift(@$b);
 	    $db = defined $wb;
 	    chomp($wb) if $db;
 	    if (not $db or $wa ne $wb) {
+#		print STDERR "ne: $wa $wb\n";
 		print 'not ';
 		last;
 	    }
 	}
     } else {
+#	print STDERR "!=: ", scalar @$a, " ", scalar @$b, "\n";
 	print 'not ';
     }
 }

@@ -1,6 +1,6 @@
 String::Approx ANNOUNCE
 
-String::Approx v2.0_01
+String::Approx v2.1
 
 This Perl module implements approximate matching aka fuzzy matching.
 Also the substitution operation is supported.
@@ -17,11 +17,16 @@ and features make up for the inconvenience.
 
 The new release is available from
 
-  http://www.perl.com/CPAN/modules/by-module/String/String-Approx-2.0.tar.Z
+ http://www.perl.com/CPAN/modules/by-module/String/String-Approx-2.1.tar.gz
+
+The patch level 2.1 fixes the following problems:
+
+	- robustness for long patterns (comes at the price of speed,
+	  about 10% slower when pattern > 10)
 
 The patch level 2.0_01 fixes the following problems:
 
-	- missing pod directive in Approx.pm
+	- missing pod directive in Approx.pm ("Unmatched =back ..")
 	- robustness when $_ is undefined
 
 --

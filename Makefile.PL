@@ -4,5 +4,6 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'	=> 'String::Approx',
-    'VERSION'	=> '2.0_01'
+    'VERSION'	=> '2.1',
+    'dist'	=> { 'COMPRESS' => 'gzip' }
 );

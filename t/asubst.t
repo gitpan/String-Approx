@@ -4,7 +4,7 @@ chdir('t') or die "could not chdir to 't'";
 
 require 't'; # har har
 
-print "1..9\n";
+print "1..10\n";
 
 # test 1
 
@@ -21,7 +21,7 @@ t(
       (pearl)
       (perk)
       su(pera)ppeal
-      su(perl)ative
+      su(perla)tive
    )],
   [asubstitute('perl', '($&)', <WORDS>)]);
 print "ok 1\n";
@@ -42,7 +42,7 @@ t(
       (parl)ance
       (perk)
       su(pera)ppeal
-      su(perl)ative
+      su(perla)tive
    )],
   [asubstitute('perl', '($&)', ['I0'], <WORDS>)]);
 print "ok 2\n";
@@ -62,7 +62,7 @@ t(
       (pearl)
       (perk)
       su(pera)ppeal
-      su(perl)ative
+      su(perla)tive
    )],
   [asubstitute('perl', '($&)', ['D0'], <WORDS>)]);
 print "ok 3\n";
@@ -98,24 +98,24 @@ t(
       a(berr)ant
       ac(cel)erate
       a(ppeal)
-      dis(pel)
-      (erl)angen
+      di(spel)
+      (erla)ngen
       (fel)icity
       gib(beri)sh
-      hy(perbol)a
+      h(yperb)ola
       i(tera)te
       le(gerd)emain
-      (merl)in
+      (merli)n
       (merm)aid
       oat(meal)
       (park)
-      (parl)ance
+      (parla)nce
       (Pearl)
       (pearl)
       (perk)
       (petal)
-      su(perap)peal
-      s(uperl)ative
+      s(upera)ppeal
+      s(uperla)tive
       su(ppl)e
       t(wirl)
       (zeal)ous
@@ -141,7 +141,7 @@ t(
       (pearl)
       (perk)
       su(pera)ppeal
-      su(perl)ative
+      su(perla)tive
      )],
   [asubstitute('perl', '($&)', ['i'], <WORDS>)]);
 print "ok 6\n";
@@ -164,7 +164,7 @@ t(
       (pearl)
       (perk)
       su(pera)p(peal)
-      su(perl)ative
+      su(perla)tive
      )],
   [asubstitute('perl', '($&)', ['ig'], <WORDS>)]);
 print "ok 7\n";
@@ -186,7 +186,7 @@ t(
       (:pearl:)
       (:perk:)
       su(su:pera:ppeal)ppeal
-      su(su:perl:ative)ative
+      su(su:perla:tive)tive
    )],
   [asubstitute('perl', q(($`:$&:$')), map {chomp;$_} <WORDS>)]);
 print "ok 8\n";
@@ -197,8 +197,14 @@ close(WORDS);
 
 undef $_;
 eval 'asubstitute("foo","bar")';
-print "# $@";
 print 'not ' unless ($@ =~ /what are you matching against/);
 print "ok 9\n";
+$_ = 'foo'; # anything defined so later tests do not fret
+
+# test 10: test for too long pattern
+
+eval 'asubstitute("abcdefghijklmnopqrst" x 10,"")';
+print 'not 'if ($@ =~ /too long pattern/);
+print "ok 10\n";
 
 # eof
