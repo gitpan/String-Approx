@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = '3.23';
+$VERSION = '3.24';
 
 use strict;
 local $^W = 1;
@@ -569,10 +569,10 @@ element is always a superstring of the pattern.
 
 With the modifiers you can control the amount of approximateness and
 certain other control variables.  The modifiers are one or more
-strings, for example C<"i">, within a string optionally separated by
-whitespace.  The modifiers are inside an anonymous array: the C<[ ]>
-in the syntax are not notational, they really do mean C<[ ]>, for
-example C<[ "i", "2" ]>.  C<["2 i"]> would be identical.
+strings, for example B<"i">, within a string optionally separated by
+whitespace.  The modifiers are inside an anonymous array: the B<[ ]>
+in the syntax are not notational, they really do mean B<[ ]>, for
+example B<[ "i", "2" ]>.  B<["2 i"]> would be identical.
 
 The implicit default approximateness is 10%, rounded up.  In other
 words: every tenth character in the pattern may be an error, an edit.
@@ -582,7 +582,7 @@ modifier like
 	number
 	number%
 
-Examples: C<"3">, C<"15%">.
+Examples: B<"3">, B<"15%">.
 
 Note that C<0%> is not rounded up, it is equal to C<0>.
 
@@ -597,10 +597,10 @@ with I, D, or S, like this:
 	Snumber
 	Snumber%
 
-Examples: C<"I2">, C<"D20%">, C<"S0">.
+Examples: B<"I2">, B<"D20%">, B<"S0">.
 
-You can ignore case (C<"A"> becames equal to C<"a"> and vice versa)
-by adding the C<"i"> modifier.
+You can ignore case (B<"A"> becames equal to B<"a"> and vice versa)
+by adding the B<"i"> modifier.
 
 For example
 
@@ -626,7 +626,7 @@ elements that did match the pattern.  If no inputs are given,
 substitute in the B<$_>.  The replacement can contain magic strings
 B<$&>, B<$`>, B<$'> that stand for the matched string, the string
 before it, and the string after it, respectively.  All the other
-arguments are as in C<amatch()>, plus one additional modifier, C<"g">
+arguments are as in C<amatch()>, plus one additional modifier, B<"g">
 which means substitute globally (all the matches in an element and not
 just the first one, as is the default).
 
@@ -760,7 +760,7 @@ and substitutions produce often very similar results: "abcde" matches
 "axbcde" either by insertion B<or> substitution of "x".
 
 The maximum edit distance is also the maximum number of edits.
-That is, the C<"I2"> in
+That is, the B<"I2"> in
 
 	amatch("abcd", ["I2"])
 
@@ -793,7 +793,7 @@ or the both the modifiers
 	"initial_position=24"
 	"position_range=10"
 
-By setting the C<"position_range"> to be zero you can limit
+By setting the B<"position_range"> to be zero you can limit
 (anchor) the operation to happen only once (if a match is possible)
 at the position.
 
@@ -834,11 +834,11 @@ scalable algorithm written in C is used.
 The string matched and substituted is now always stingy, as short
 as possible.  It used to be as long as possible.  This is an unfortunate
 change stemming from switching the matching algorithm.  Example: with
-edit distance of two and substituting for C<"word"> from C<"cork"> and
-C<"wool"> previously did match C<"cork"> and C<"wool">.  Now it does
-match C<"or"> and C<"wo">.  As little as possible, or, in other words,
+edit distance of two and substituting for B<"word"> from B<"cork"> and
+B<"wool"> previously did match B<"cork"> and B<"wool">.  Now it does
+match B<"or"> and B<"wo">.  As little as possible, or, in other words,
 with as much approximateness, as many edits, as possible.  Because
-there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
+there is no I<need> to match the B<"c"> of B<"cork">, it is not matched.
 
 =item no more C<aregex()> because regular expressions are no more used
 
@@ -871,7 +871,7 @@ Jarkko Hietaniemi <jhi@iki.fi>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2001-2003 by Jarkko Hietaniemi
+Copyright 2001-2005 by Jarkko Hietaniemi
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

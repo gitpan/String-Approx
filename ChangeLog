@@ -1,3 +1,10 @@
+2005-01-02  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Pure documentation cleanup release to address
+	  http://rt.cpan.org/NoAuth/Bug.html?id=6668
+	
+	* Released as 3.24.
+
 Mon Nov 30 15:18:15 2003  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Safeguards against trying to use greater edit distance
