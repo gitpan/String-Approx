@@ -1,3 +1,19 @@
+Thu Nov 16 22:35:13 2000  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Fixed the apse.c:_apse_match() for loop bug reported
+	  by Ross Smith and Eric Promislow.
+
+	* Add adist() and adistr() which tell the edit distance
+	  and the relative edit distance.  For both zero is an exact match,
+	  and negative means that the pattern is longer than the input.
+	  For the relative edit distances 1 means that the strings are
+	  completely different, and the negative values never reach -1.
+	  This feature has been requested by zillions. 		
+	
+	* Add arindex() (a backward aindex()).
+
+	* Add BUGS list.  Two open bugs. 
+
 Wed Sep  6 19:23:55 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Released as 3.13.

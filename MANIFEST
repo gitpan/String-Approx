@@ -3,6 +3,7 @@ Approx.xs
 apse.c
 apse.h
 Artistic
+BUGS
 ChangeLog
 COPYRIGHT
 COPYRIGHT.agrep
@@ -12,9 +13,11 @@ MANIFEST
 PROBLEMS
 README
 README.apse
+t/adist.t
 t/aindex.t
 t/amatch.t
 t/aslice.t
+t/arindex.t
 t/asubst.t
 t/user.t
 t/util

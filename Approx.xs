@@ -217,6 +217,15 @@ set_text_final_position(ap, text_final_position)
     OUTPUT:
         RETVAL
 
+apse_bool_t
+set_text_position_range(ap, text_position_range)
+        apse_t*         ap
+        apse_size_t     text_position_range = SvUV($arg);
+    CODE:
+        RETVAL = apse_set_text_position_range(ap, text_position_range);
+    OUTPUT:
+        RETVAL
+
 void
 set_minimal_distance(ap)
         apse_t*         ap

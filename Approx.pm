@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = "3.13";
+$VERSION = 3.14;
 
 use strict;
 local $^W = 1;
@@ -13,7 +13,8 @@ require DynaLoader;
 
 @ISA = qw(Exporter DynaLoader);
 
-@EXPORT_OK = qw(amatch asubstitute aindex aslice);
+@EXPORT_OK = qw(amatch asubstitute aindex aslice arindex
+		adist adistr adistword adistrword);
 
 bootstrap String::Approx $VERSION;
 
@@ -66,6 +67,8 @@ sub _parse_param {
 		$param{'initial_position'} = $1;
 	    } elsif (s/^final_position\W+(\d+)\b//) {
 		$param{'final_position'} = $1;
+	    } elsif (s/^position_range\W+(\d+)\b//) {
+		$param{'position_range'} = $1;
 	    } elsif (s/^minimal_distance\b//) {
 		$param{'minimal_distance'} = 1;
             } elsif (s/^i//) {
@@ -135,6 +138,10 @@ sub _complex {
 	$_complex{$P}->{$_param_key}->
 	  set_text_final_position($param{'final_position'})
 	    if exists $param{'final_position'};
+
+	$_complex{$P}->{$_param_key}->
+	  set_text_position_range($param{'position_range'})
+	    if exists $param{'position_range'};
 
 	$_complex{$P}->{$_param_key}->set_minimal_distance()
 	    if exists $param{'minimal_distance'};
@@ -292,7 +299,7 @@ sub aindex {
 	if (wantarray) {
 	    return map { $a->index($_) } @_;
 	} else {
-	    return $a->index(shift(@_));
+	    return $a->index($_[0]);
 	}
     }
     return $a->index($_) if defined $_;
@@ -312,6 +319,98 @@ sub aslice {
     }
     return $a->slice($_) if defined $_;
     die "aslice: \$_ is undefined: what are you slicing?\n";
+}
+
+sub _adist {
+    my $s0 = shift;
+    my $s1 = shift;
+    my ($aslice) = aslice($s0, ['minimal_distance', @_], $s1);
+    my ($index, $size, $distance) = @$aslice;
+    my ($l0, $l1) = map { length } ($s0, $s1);
+    return $l0 <= $l1 ? $distance : -$distance;
+}
+
+sub adist {
+    my $a0 = shift;
+    my $a1 = shift;
+    my @m = ref $_[0] eq 'ARRAY' ? @{shift()} : ();
+    if (ref $a0 eq 'ARRAY') {
+	if (ref $a1 eq 'ARRAY') {
+	    return [ map {  adist($a0, $_, @m) } @{$a1} ];
+	} else {
+	    return [ map { _adist($_, $a1, @m) } @{$a0} ];
+	}
+    } elsif (ref $a1 eq 'ARRAY') {
+	return     [ map { _adist($a0, $_, @m) } @{$a1} ];
+    } else {
+	if (wantarray) {
+	    return map { _adist($a0, $_, @m) } ($a1, @_);
+	} else {
+	    return _adist($a0, $a1, @m);
+	}
+    }
+}
+
+sub adistr {
+    my $a0 = shift;
+    my $a1 = shift;
+    my @m = ref $_[0] eq 'ARRAY' ? shift : ();
+    if (ref $a0 eq 'ARRAY') {
+	if (ref $a1 eq 'ARRAY') {
+	    my $l0 = length($a0);
+	    return $l0 ? [ map { adist($a0, $_, @m) }
+			  @{$a1} ] :
+		         [ ];
+	} else {
+	    return [ map { my $l0 = length();
+			   $l0 ? _adist($_, $a1, @m) / $l0 : undef
+		     } @{$a0} ];
+	}
+    } elsif (ref $a1 eq 'ARRAY') {
+	my $l0 = length($a0);
+	return [] unless $l0;
+	return     [ map { _adist($a0, $_, @m) / $l0 } @{$a1} ];
+    } else {
+	my $l0 = length($a0);
+	return undef unless $l0;
+	return _adist($a0, $a1, @m) / $l0;
+    }
+}
+
+sub adistword {
+    return adist($_[0], $_[1], ['position_range=0']);
+}
+
+sub adistrword {
+    return adistr($_[0], $_[1], ['position_range=0']);
+}
+
+sub arindex {
+    my $P = shift;
+    my $l = length $P;
+    return 0 unless $l;
+    my $R = reverse $P;
+    my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
+		 _complex($R, @{ shift(@_) }) : _simple($R))[0];
+
+    $a->set_greedy; # The *first* match, thank you.
+
+    if (@_) {
+	if (wantarray) {
+	    return map {
+		my $aindex = $a->index(scalar reverse());
+		$aindex == -1 ? $aindex : (length($_) - $aindex - $l);
+	    } @_;
+	} else {
+	    my $aindex = $a->index(scalar reverse $_[0]);
+	    return $aindex == -1 ? $aindex : (length($_[0]) - $aindex - $l);
+	}
+    }
+    if (defined $_) {
+	my $aindex = $a->index(scalar reverse());
+	return $aindex == -1 ? $aindex : (length($_) - $aindex - $l);
+    }
+    die "arindex: \$_ is undefined: what are you indexing?\n";
 }
 
 1;
@@ -362,10 +461,17 @@ The edit distance of "lead" and "gold" is therefore three.
 
 	use String::Approx 'amatch';
 
-	amatch("pattern") 
-	amatch("pattern", @inputs) 
-	amatch("pattern", [ modifiers ])
-	amatch("pattern", [ modifiers ], @inputs)
+	$matched     = amatch("pattern") 
+	$matched     = amatch("pattern", [ modifiers ])
+
+	$any_matched = amatch("pattern", @inputs) 
+	$any_matched = amatch("pattern", [ modifiers ], @inputs)
+
+	@match       = amatch("pattern") 
+	@match       = amatch("pattern", [ modifiers ])
+
+	@matches     = amatch("pattern", @inputs) 
+	@matches     = amatch("pattern", [ modifiers ], @inputs)
 
 Match B<pattern> approximately.  In list context return the matched
 B<@inputs>.  If no inputs are given, match against the B<$_>.  In scalar
@@ -427,21 +533,15 @@ means I<ignore case>, I<allow every fourth character to be "an edit">,
 but allow I<no substitutions>.  (See L<NOTES> about disallowing
 substitutions or insertions.)
 
-The starting and ending positions of matching can be changed from the
-beginning and end of the input(s) to some other positions by using
-the modifiers
-
-	"initial_position=24"
-	"final_position=42"
-
 =head1 SUBSTITUTE
 
 	use String::Approx 'asubstitute';
 
-	asubstitute("pattern", "replacement")
-	asubstitute("pattern", "replacement", @inputs) 
-	asubstitute("pattern", "replacement", [ modifiers ])
-	asubstitute("pattern", "replacement", [ modifiers ], @inputs)
+	@substituted = asubstitute("pattern", "replacement")
+	@substituted = asubstitute("pattern", "replacement", @inputs) 
+	@substituted = asubstitute("pattern", "replacement", [ modifiers ])
+	@substituted = asubstitute("pattern", "replacement",
+				   [ modifiers ], @inputs)
 
 Substitute approximate B<pattern> with B<replacement> and return as a
 list <copies> of B<@inputs>, the substitutions having been made on the
@@ -452,13 +552,6 @@ before it, and the string after it, respectively.  All the other
 arguments are as in C<amatch()>, plus one additional modifier, C<"g">
 which means substitute globally (all the matches in an element and not
 just the first one, as is the default).
-
-The starting and ending positions of substitution can be changed from
-the beginning and end of the input(s) to some other positions by using
-the modifiers
-
-	"initial_position=24"
-	"final_position=42"
 
 See L<BAD NEWS> about the unfortunate stinginess of C<asubstitute()>.
 
@@ -476,12 +569,7 @@ matches approximately.  In list context and if C<@inputs> are used,
 returns a list of indices, one index for each input element.
 If there's no approximate match, C<-1> is returned as the index.
 
-The starting and ending positions of indexing can be changed from
-the beginning and end of the input(s) to some other positions by using
-the modifiers
-
-	"initial_position=24"
-	"final_position=42"
+There's also backwards-scanning C<arindex()>.
 
 =head1 SLICE
 
@@ -510,12 +598,30 @@ third element:
 	($index, $size, $distance) = aslice("pattern", [ modifiers ])
 	([$i0, $s0, $d0], ...)     = aslice("pattern", [ modifiers ], @inputs)
 
-The starting and ending positions of slicing can be changed from
-the beginning and end of the input(s) to some other positions by using
-the modifiers
+=head1 DISTANCE
 
-	"initial_position=24"
-	"final_position=42"
+	use String::Approx 'adist';
+
+	$dist = adist("pattern", $input);
+	@dist = adist("pattern", @input);
+
+Return the I<edit distance> or distances between the pattern and the
+input or inputs.  Zero edit distance means exact match.  (Remember
+that the match can 'float' in the inputs, the match is a substring
+match.)  If the pattern is longer than the input or inputs, the
+returned distance or distance is or are negative.
+
+	use String::Approx 'adistr';
+
+	$dist = adistr("pattern", $input);
+	@dist = adistr("pattern", @inputs);
+
+Return the B<relative> I<edit distance> or distances between the
+pattern and the input or inputs.  Zero relative edit distance means
+exact match, one means completely different.  (Remember that the
+match can 'float' in the inputs, the match is a substring match.)  If
+the pattern is longer than the input or inputs, the returned distance
+or distances is or are negative.
 
 =head1 NOTES
 
@@ -543,7 +649,23 @@ you need to allow at least edit distance of two because in terms of
 our edit primitives a transpose is first one deletion and then one
 insertion.
 
-There's no backwards-scanning 'arindex'.
+=head2 TEXT POSITION
+
+The starting and ending positions of matching, substituting, indexing, or
+slicing can be changed from the beginning and end of the input(s) to
+some other positions by using either or both of the modifiers
+
+	"initial_position=24"
+	"final_position=42"
+
+or the both the modifiers
+
+	"initial_position=24"
+	"position_range=10"
+
+By setting the C<"position_range"> to be zero you can limit
+(anchor) the operation to happen only once (if a match is possible)
+at the position.
 
 =head1 VERSION
 
@@ -600,8 +722,9 @@ The following people have provided with valuable test cases and other
 feedback: Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij
 Frishman, Lars Gregersen, Kevin Greiner, Mike Hanafey, Ricky Houghton,
 Helmut Jarausch, Ben Kennedy, Mark Land, Sergey Novoselov, Andy Oram,
-Stefan Ram, Stewart Russell, Slaven Rezic, Chris Rosin, Ilya Sandler,
-Bob J.A. Schijvenaars, Greg Ward, Rick Wise.
+Eric Promislow, Stefan Ram, Stewart Russell, Slaven Rezic, Chris
+Rosin, Ilya Sandler, Bob J.A. Schijvenaars, Ross Smith, Greg Ward,
+Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.

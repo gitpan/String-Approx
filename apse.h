@@ -86,6 +86,7 @@ typedef struct apse_s {
     apse_size_t		text_position;
     apse_size_t		text_initial_position;
     apse_size_t		text_final_position;
+    apse_size_t		text_position_range;
 
     apse_vec_t*		state;
     apse_vec_t*		prev_state;
@@ -161,6 +162,9 @@ apse_size_t apse_get_text_initial_position(apse_t *ap);
 apse_bool_t apse_set_text_final_position(apse_t *ap,
 					   apse_size_t text_final_position);
 apse_size_t apse_get_text_final_position(apse_t *ap);
+apse_bool_t apse_set_text_position_range(apse_t *ap,
+					   apse_size_t text_position_range);
+apse_size_t apse_get_text_position_range(apse_t *ap);
 
 apse_bool_t apse_set_insertions(apse_t *ap, apse_size_t insertions);
 apse_bool_t apse_set_deletions(apse_t *ap, apse_size_t deletions);

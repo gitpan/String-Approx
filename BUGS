@@ -1,0 +1,8 @@
+Thu Nov 16 22:31:28 2000  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+
+	* Memory leak in amatch() reported by Frank Kirsch.
+	  Still open.
+
+	* Problem with aindex() and symmetric-like strings
+	  reported by Frank Tobin.  Still open.
+

@@ -2,8 +2,6 @@ use String::Approx 'aindex';
 
 chdir('t') or die "could not chdir to 't'";
 
-require 'util';
-
 print "1..12\n";
 
 print "not " unless aindex("xyz", "abcdef")    == -1;

@@ -403,10 +403,22 @@ apse_size_t apse_get_text_final_position(apse_t *ap) {
     return ap->text_final_position;
 }
 
+apse_bool_t apse_set_text_position_range(apse_t *ap,
+					 apse_size_t text_position_range) {
+    ap->text_position_range = text_position_range;
+
+    return 1;
+}
+
+apse_size_t apse_get_text_position_range(apse_t *ap) {
+    return ap->text_position_range;
+}
+
 void apse_reset(apse_t *ap) {
     _apse_reset_state(ap);
 
     ap->text_position = ap->text_initial_position;
+    ap->text_position_range = APSE_MATCH_BAD;
 
     ap->match_state = APSE_MATCH_STATE_BOT;
     ap->match_begin = APSE_MATCH_BAD;
@@ -630,6 +642,7 @@ apse_t *apse_create(unsigned char*	pattern,
     ap->text_position		= 0;
     ap->text_initial_position	= 0;
     ap->text_final_position	= APSE_MATCH_BAD;
+    ap->text_position_range	= APSE_MATCH_BAD;
 
     ap->state			= 0;
     ap->prev_state		= 0;
@@ -1210,7 +1223,8 @@ static apse_bool_t __apse_match(apse_t		*ap,
 	goto out;
     }
 
-    if (ap->pattern_size - ap->edit_deletions > ap->text_size - ap->text_initial_position) {
+    if (ap->pattern_size - ap->edit_deletions >
+	ap->text_size - ap->text_initial_position) {
 	ap->match_state   = APSE_MATCH_STATE_EOT;
 	ap->text_position = ap->text_size;
 	goto out;
@@ -1224,6 +1238,13 @@ static apse_bool_t __apse_match(apse_t		*ap,
     if (ap->match_state == APSE_MATCH_STATE_SEARCH) {
 	ap->text_position++;
 	_apse_reset_state(ap);
+    }
+
+    if (ap->text_position_range != APSE_MATCH_BAD &&
+	ap->text_position - ap->text_initial_position >
+	ap->text_position_range) {
+	ap->match_state   = APSE_MATCH_STATE_END;
+	goto eot;
     }
 
     ap->match_state = APSE_MATCH_STATE_SEARCH;
@@ -1277,38 +1298,43 @@ static apse_bool_t _apse_match(apse_t 		*ap,
 			       unsigned char	*text,
 			       apse_size_t	text_size) {
     if (ap->use_minimal_distance) {
-	apse_size_t minimal_edit_distance;
-	apse_size_t previous_edit_distance;
-	apse_size_t next_edit_distance;
-	apse_size_t text_size_twice_plus_one = 2 * text_size + 1;
-
-	for (next_edit_distance = 0; ;
-	     next_edit_distance <= text_size_twice_plus_one) {
-	    apse_set_edit_distance(ap, next_edit_distance);
-	    if (__apse_match(ap, text, text_size))
-		break;
-	    previous_edit_distance = next_edit_distance;
-	    next_edit_distance = 2 * next_edit_distance + 1;
-	} 
-	minimal_edit_distance = 0;
-	if (next_edit_distance) {
-	    do {
-		minimal_edit_distance =
-		    (previous_edit_distance + next_edit_distance) / 2;
-		if (minimal_edit_distance == previous_edit_distance)
-		    break;
+	apse_set_edit_distance(ap, 0);
+	if (__apse_match(ap, text, text_size))
+	    return 1;
+	else {
+	    apse_size_t minimal_edit_distance;
+	    apse_size_t previous_edit_distance = 0;
+	    apse_size_t next_edit_distance;
+	    
+	    for (next_edit_distance = 1;
+		 next_edit_distance <= ap->pattern_size;
+		 next_edit_distance *= 2) {
 		apse_set_edit_distance(ap, next_edit_distance);
 		if (__apse_match(ap, text, text_size))
-		    next_edit_distance     = minimal_edit_distance;
-		else
-		    previous_edit_distance = minimal_edit_distance;
-	    } while (previous_edit_distance < next_edit_distance);
-	    minimal_edit_distance++;
+		    break;
+		previous_edit_distance = next_edit_distance;
+	    } 
+	    minimal_edit_distance = 0;
+	    if (next_edit_distance) {
+		do {
+		    minimal_edit_distance =
+			(previous_edit_distance + next_edit_distance) / 2;
+		    if (minimal_edit_distance == previous_edit_distance)
+			break;
+		    apse_set_edit_distance(ap, minimal_edit_distance);
+		    if (__apse_match(ap, text, text_size))
+			next_edit_distance     = minimal_edit_distance;
+		    else
+			previous_edit_distance = minimal_edit_distance;
+		} while (previous_edit_distance <= next_edit_distance);
+		if (!__apse_match(ap, text, text_size))
+		    minimal_edit_distance++;
+	    }
+	    apse_set_edit_distance(ap, minimal_edit_distance);
+	    __apse_match(ap, text, text_size);
+	    
+	    return 1;
 	}
-	apse_set_edit_distance(ap, minimal_edit_distance);
-	__apse_match(ap, text, text_size);
-
-	return 1;
     } else
 	return __apse_match(ap, text, text_size);
 }
