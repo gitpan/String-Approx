@@ -422,7 +422,7 @@ Also this tends to be somewhat slower.
 
 =head1 VERSION
 
-Version 2.6.
+Version 2.7.
 
 =head1 LIMITATIONS
 
@@ -514,7 +514,7 @@ use vars qw($PACKAGE $VERSION $compat1
 	    %P @aL @dL @Pl %Pp);
 
 $PACKAGE = 'String::Approx';
-$VERSION = 2.6;
+$VERSION = 2.7;
 
 $compat1 = 0;
 

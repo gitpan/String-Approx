@@ -1,5 +1,9 @@
 Release
 
+2.7	- Packaging problem fixed.
+
+2.6	- A bug less.
+
 2.5	- String::Approx had old $VERSION.
 	- no more spreads $^W = 1.
 
