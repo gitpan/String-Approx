@@ -1,4 +1,15 @@
-Mon Jul 19 10:42:13 1999  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+Tue Apr 18 06:48:34 2000  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Released as 3.10.
+	
+	* apse.c: Fix an insidious buffer overrun, found by heroic
+	debugging of J. D. Laub (already back in November 1999,
+	but I'm amazingly good at procrastinating).  This is
+	probably the bug that plagued String::Approx 3.0*
+	in HP-UX and Solaris.  I couldn't anymore repeat it
+	with in HP-UX, in Solaris it was still going strong.
+
+Mon Jul 19 10:42:13 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Released 3.09.
 

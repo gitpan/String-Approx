@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) Jarkko Hietaniemi, 1998-1999. All Rights Reserved.
+Copyright (C) Jarkko Hietaniemi, 1998,1999,2000. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of either:

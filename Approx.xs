@@ -96,7 +96,7 @@ slice(ap, text)
 	if (ap->use_minimal_distance) {
 	  apse_slice(ap,
 		     (unsigned char *)SvPV(text, PL_na),
-		     SvCUR(text),
+		     (apse_size_t)SvCUR(text),
 		     &match_begin,
 		     &match_size);
 	  EXTEND(sp, 3);
@@ -105,7 +105,7 @@ slice(ap, text)
 	  PUSHs(sv_2mortal(newSViv(ap->edit_distance)));
 	} else if (apse_slice(ap,
 			      (unsigned char *)SvPV(text, PL_na),
-			      SvCUR(text),
+			      (apse_size_t)SvCUR(text),
 			      &match_begin,
 			      &match_size)) {
 	  EXTEND(sp, 2);

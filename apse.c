@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) Jarkko Hietaniemi, 1998-1999. All Rights Reserved.
+Copyright (C) Jarkko Hietaniemi, 1998,1999,2000. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of either:
@@ -419,15 +419,15 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
 
     ap->edit_distance = edit_distance;
 
-    ap->bytes_in_all_states = (edit_distance + 1)* ap->bytes_in_state;
+    ap->bytes_in_all_states = (edit_distance + 1) * ap->bytes_in_state;
 
     ap->state = ap->prev_state = 0;
 
-    ap->state = calloc(edit_distance + 1, ap->bytes_in_all_states);
+    ap->state = calloc(edit_distance + 1, ap->bytes_in_state);
     if (!ap->state)
 	goto out;
 
-    ap->prev_state = calloc(edit_distance + 1, ap->bytes_in_all_states);
+    ap->prev_state = calloc(edit_distance + 1, ap->bytes_in_state);
     if (!ap->prev_state)
 	goto out;
 
@@ -848,8 +848,10 @@ static void _apse_match_eot(apse_t *ap) {
 }
 
 static apse_bool_t _apse_match_next_state(apse_t *ap) {
-    apse_size_t	h, i, j;
+    apse_size_t	h, i, j, k;
     apse_vec_t	match;
+
+    k = ap->edit_distance * ap->bitvectors_in_state;
 
     switch (ap->match_state) {
     case APSE_MATCH_STATE_SEARCH:
@@ -862,7 +864,7 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 	    apse_size_t		active	= 0;
 
 	    for (h = 0;
-		 h <= ap->largest_distance;
+		 h <= k;
 		 h += ap->bitvectors_in_state) {
 		for (i = h, j = i + ap->bitvectors_in_state - 1; i < j; j--)
 		    if (ap->state[j] != ap->prev_state[j])
@@ -884,7 +886,7 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
     }
 
     for (match = 0, h = 0;
-	 h <= ap->largest_distance;
+	 h <= k;
 	 h += ap->bitvectors_in_state)
 	match |= ap->state[h + ap->match_end_bitvector];
 

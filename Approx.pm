@@ -1,8 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.09;
-
-require 5.004_04;
+$VERSION = "3.10";
 
 use strict;
 local $^W = 1;
@@ -288,7 +286,7 @@ sub aindex {
     my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
 		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
 
-    $a->set_greedy(); # The *first* match, thank you.
+    $a->set_greedy; # The *first* match, thank you.
 
     if (@_) {
 	if (wantarray) {
@@ -307,7 +305,7 @@ sub aslice {
     my $a = ((@_ && ref $_[0] eq 'ARRAY') ?
 		 _complex($P, @{ shift(@_) }) : _simple($P))[0];
 
-    $a->set_greedy(); # The *first* match, thank you.
+    $a->set_greedy; # The *first* match, thank you.
 
     if (@_) {
 	return map { [ $a->slice($_) ] } @_;
