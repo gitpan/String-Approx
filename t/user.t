@@ -264,13 +264,15 @@ print "ok 29\n";
 
 open(MAKEFILEPL, "../Makefile.PL") or die "$0: failed to open Makefile.PL: $!";
 # Don't let a debugging version escape the laboratory.
-print "not " if grep {/^[^#]*-DAPSE_DEBUGGING/} <MAKEFILEPL>;
+print "not " if my $debugging = grep {/^[^#]*-DAPSE_DEBUGGING/} <MAKEFILEPL>;
 print "ok 30\n";
 close(MAKEFILEPL);
+warn "(You have -DAPSE_DEBUGGING turned on!)\n" if $debugging;
 
 # test 31: David Curiel
 print "not " unless aindex("xyz", "abxefxyz") == 5;
 print "ok 31\n";
+print aindex("xyz", "abxefxyz"), "\n";
 
 # tests 32..34: Stefan Ram <ram@cis.fu-berlin.de>
 

@@ -1,3 +1,13 @@
+Mon Nov 30 15:18:15 2003  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Safeguards against trying to use greater edit distance
+	  than the pattern is long, inspired by 'idallen'.
+	
+	* Advise against using String::Approx for text comparisons,
+	  since String::Approx is meant for strings.
+	
+	* Released as 3.23.
+
 Sun Oct 19 12:17:20 2003  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* adistr($pattern, @inputs) returned absolute, not relative,

@@ -48,10 +48,10 @@ Furthermore:
 #endif
 
 #define APSE_BIT(i)		((apse_vec_t)1 << ((i)%APSE_BITS_IN_BITVEC))
-#define APSE_IDX(p, q, i)	((p)*(q)+(i)/APSE_BITS_IN_BITVEC)
-#define APSE_BIT_SET(bv, p, q, i) (bv[APSE_IDX(p, q, i)] |=  APSE_BIT(i))
-#define APSE_BIT_CLR(bv, p, q, i) (bv[APSE_IDX(p, q, i)] &= ~APSE_BIT(i))
-#define APSE_BIT_TST(bv, p, q, i) (bv[APSE_IDX(p, q, i)] &   APSE_BIT(i))
+#define APSE_IDX(p, q, i)	((p)*(q)+((i)/APSE_BITS_IN_BITVEC))
+#define APSE_BIT_SET(bv, p, q, i) ((bv[APSE_IDX(p, q, i)] |=  APSE_BIT(i)))
+#define APSE_BIT_CLR(bv, p, q, i) ((bv[APSE_IDX(p, q, i)] &= ~APSE_BIT(i)))
+#define APSE_BIT_TST(bv, p, q, i) ((bv[APSE_IDX(p, q, i)] &   APSE_BIT(i)))
 
 #define APSE_MATCH_STATE_BOT		0
 #define APSE_MATCH_STATE_SEARCH		1
@@ -190,7 +190,7 @@ apse_bool_t apse_set_pattern(apse_t*		ap,
     ap->bytes_in_state = ap->bitvectors_in_state * sizeof(apse_vec_t);
 
     ap->case_mask = calloc((apse_size_t)APSE_CHAR_MAX, ap->bytes_in_state);
-    if (!ap->case_mask)
+    if (ap->case_mask == 0)
 	goto out;
 
     for (i = 0; i < pattern_size; i++)
@@ -370,8 +370,14 @@ static void _apse_reset_state(apse_t* ap) {
     ap->prev_active = 0;
 
     for (i = 1; i <= ap->edit_distance; i++) {
-	for (j = 0; j < i; j++)
+        for (j = 0; j < i; j++) {
+#ifdef APSE_DEBUGGING
+            int k = APSE_IDX(i, ap->bitvectors_in_state, j);
+	    int l = ap->bytes_in_all_states/sizeof(apse_vec_t);
+	    assert (k < l);
+#endif
 	    APSE_BIT_SET(ap->prev_state, i, ap->bitvectors_in_state, j);
+	}
     }
 }
 
@@ -438,6 +444,9 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
     if (ap->prev_state)
 	free(ap->prev_state);
 
+    if (edit_distance >= ap->pattern_size)
+        edit_distance = ap->pattern_size;
+
     ap->edit_distance = edit_distance;
 
     ap->bytes_in_all_states = (edit_distance + 1) * ap->bytes_in_state;
@@ -445,11 +454,11 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
     ap->state = ap->prev_state = 0;
 
     ap->state = calloc(edit_distance + 1, ap->bytes_in_state);
-    if (!ap->state)
+    if (ap->state == 0)
 	goto out;
 
     ap->prev_state = calloc(edit_distance + 1, ap->bytes_in_state);
-    if (!ap->prev_state)
+    if (ap->prev_state == 0)
 	goto out;
 
     apse_reset(ap);
@@ -512,7 +521,7 @@ apse_bool_t apse_set_exact_slice(apse_t*	ap,
     if (!ap->exact_mask) {
 
 	ap->exact_mask = calloc((size_t)1, ap->bytes_in_state);
-	if (!ap->exact_mask)
+	if (ap->exact_mask == 0)
 	    goto out;
 
 	ap->exact_positions = 0;
@@ -557,7 +566,7 @@ apse_bool_t apse_set_caseignore_slice(apse_t*		ap,
 
 	ap->fold_mask = calloc((apse_size_t)APSE_CHAR_MAX,
 			       ap->bytes_in_state);
-	if (!ap->fold_mask)
+	if (ap->fold_mask == 0)
 	    goto out;
 
 	memcpy(ap->fold_mask,
@@ -637,7 +646,7 @@ apse_t *apse_create(unsigned char*	pattern,
 	       pattern, pattern_size));
 
     ap = calloc((size_t)1, sizeof(*ap));
-    if (!ap)
+    if (ap == 0)
 	return 0;
 
     ap->pattern_size		= 0;
@@ -894,7 +903,7 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 	    for (h = 0;
 		 h <= k;
 		 h += ap->bitvectors_in_state) {
-		for (i = h, j = i + ap->bitvectors_in_state - 1; i < j; j--)
+	        for (i = h, j = h + ap->bitvectors_in_state - 1; i < j; j--)
 		    if (ap->state[j] != ap->prev_state[j])
 			break;
 		if (ap->prev_state[j] == ap->state[j])
@@ -905,12 +914,17 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 #ifdef APSE_DEBUGGING
 	    printf("(equal = %d, active = %d)\n", equal, active);
 #endif
-	    if (equal == ap->edit_distance + 1 && ap->is_greedy == 0 ||
-		equal < ap->prev_equal && ap->prev_active && active > ap->prev_active &&
-		!APSE_BIT_TST(ap->state,
-			      ap->edit_distance,
-			      ap->bitvectors_in_state,
-			      ap->text_position - ap->match_begin)) {
+	    if ((equal == ap->edit_distance + 1 &&
+		 ap->is_greedy == 0)
+		||
+		(equal < ap->prev_equal &&
+		 ap->prev_active &&
+		 active > ap->prev_active &&
+		 ap->text_position - ap->match_begin < 8 * ap->bytes_in_state &&
+		 !APSE_BIT_TST(ap->state,
+			       ap->edit_distance,
+			       ap->bitvectors_in_state,
+			       ap->text_position - ap->match_begin))) {
 		ap->match_begin = ap->text_position;
 #ifdef APSE_DEBUGGING
 		printf("(slide begin %d)\n", ap->match_begin);

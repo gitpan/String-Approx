@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = '3.22';
+$VERSION = '3.23';
 
 use strict;
 local $^W = 1;
@@ -502,6 +502,16 @@ With this you can emulate errors: typing errorrs, speling errors,
 closely related vocabularies (colour color), genetic mutations (GAG
 ACT), abbreviations (McScot, MacScot).
 
+NOTE: String::Approx has been designed to work with B<strings>, not
+with B<text>.  In other words, when you want to compare things like
+text or source code, consisting of B<words> or B<tokens> and
+B<phrases> and B<sentences>, or B<expressions> and B<statements>,
+you should probably use some other tool than String::Approx, like for
+example the standard UNIX diff(1) tool, or the Algorithm::Diff module
+from CPAN, or if you just want the Levenshtein edit distance
+(explained below), the Text::Levenshtein module from CPAN.  See also
+Text::WagnerFischer and Text::PhraseDistance.
+
 The measure of B<approximateness> is the I<Levenshtein edit distance>.
 It is the total number of "edits": insertions,
 
@@ -520,7 +530,7 @@ transform I<"lead"> into I<"gold">, you need three edits:
 
 	lead gead goad gold
 
-The edit distance of "lead" and "gold" is therefore three.
+The edit distance of "lead" and "gold" is therefore three, or 75%.
 
 =head1 MATCH
 

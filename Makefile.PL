@@ -5,5 +5,6 @@ WriteMakefile(
 	VERSION_FROM	=> 'Approx.pm',
 	OBJECT		=> 'Approx.o apse.o',
 #	CCFLAGS		=> '-DAPSE_DEBUGGING',
+#	CCFLAGS		=> '-Wall',
 	dist		=> { 'COMPRESS' => 'gzip' }
 );
