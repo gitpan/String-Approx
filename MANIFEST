@@ -1,10 +1,14 @@
+ANNOUNCE
 Approx.pm
-README
 MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+NEWS
+README
+bench_run
 t/amatch.t
+t/aregex.t
 t/asubst.t
 t/compat1.t
 t/t
 t/words
-Makefile.PL
-ANNOUNCE

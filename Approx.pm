@@ -6,7 +6,7 @@ String::Approx - match and substitute approximately (aka fuzzy matching)
 
 =head1 SYNOPSIS
 
-	use String::Approx qw(amatch asubstitute);
+	use String::Approx qw(amatch asubstitute aregex);
 
 =head1 DESCRIPTION
 
@@ -140,13 +140,37 @@ or the same ignoring case:
 	    print if asubstitute('perl', '($&)', [ 'i' ]);
 	}
 
+=head2 aregex
+
+	use String::Approx qw(aregex);
+
+	aregex("PATTERN");
+	aregex("PATTERN", [ @MODS ]);
+
+B<Always returns a list>: the list of regular expressions that can be
+used to approximately match the wanted pattern, given the possible
+modifiers.  If the pattern is long or the modifiers call for large
+approximateness, the list will have more than one element.  How to use
+the element past the first one, is dependent on the intended
+application of the regular expressions.
+
+	my (@regex) = aregex('Obi-wan Kenobi');
+	print $regex[0], "\n";
+	print $regex[1], "\n";
+
+If the pattern is to be passed onto an external utility such as
+C<grep(1)> the B<std> modifier may be useful.  If that is applied, the
+Perlisms C<(?:)> and <(?=)> are avoided.
+
+	my (@regex) = aregex('Obi-wan Kenobi', [ 'std' ]);
+
 =head2 Modifiers
 
-The MODS argument both in amatch() and asubstitute() is an anonymous
-array (see L<perlref>) of strings that control the matching of
-PATTERN.  The first two possible strings, B<i> and B<g>, are the usual
-regular expression match/substitute modifiers, the rest are special
-for approximate matching/substitution.
+The MODS argument in amatch(), asubstitute(), and aregex(), is an
+anonymous array (see L<perlref>) of strings that control the matching
+of PATTERN.  The first three modifiers, B<i>, B<g>, and B<?>, are the
+usual regular expression match/substitute modifiers, the rest are
+special for approximate matching/substitution.
 
 =over 8
 
@@ -158,6 +182,19 @@ Match/Substitute ignoring case, case-insensitively.
 
 Substitute I<globally>, that is, all the approximate matches, not just
 the first one.
+
+=item	?
+
+Stingy match: instead of matching greedily, as much as possibly, match
+as little as possible.
+
+=item	std
+
+Used usually only with the C<aregex()> interface.  Uses the C<()>
+instead of the C<(?:)> and does not use the C<?=> in the result
+pattern.  Useful if the pattern is going to be fed to an external tool
+that does not understand these Perl extensions.  Produces shorter
+regular expressions -- but they might match slower.
 
 =item	I<k>
 
@@ -250,6 +287,7 @@ is used and then the I<at least 1> rule.
 	print if amatch('perl', [ 'i' ]);
 
 The case is ignored in matching (C<i>).
+B<NOTE>: this option halves the speed.
 
 =item Match 'perl' with one insertion
 
@@ -266,12 +304,29 @@ The I<zero deletion> is easily achieved with simply disabling any
 deletions (C<D0>), the other types of differences, the insertions and
 substitutions, are still enabled.
 
+=item Stingy matching 
+
+	print if amatch('perl', [ '?' ]);
+
+Match stingily: as little is matched as possible, as opposed to the
+default greedy matching, where as much is matched as possible.
+
 =item Substitute 'perl' approximately with HTML emboldening
 
-	print if amatch('perl', '<B>$&</B>', [ 'g' ]);
+	print if asubstitute('perl', '<B>$&</B>', [ 'g' ]);
 
 All (C<g>) of the approximately matching parts of the input are
 surrounded by the C<HTML> emboldening markup.
+
+=item Stingy substitution
+
+	print if asubstitute('perl', '<B>$&</B>', [ '?' ]);
+
+Substitution is now stingy: as little is substituted as possible,
+as opposed to the default greedy substitution, where as much is
+substituted as possible.  When stingy the 'B<$&>' naturally
+tends to be shorter than when greedy -- and the 'B<&`>' and
+the 'B<$'>' respectively longer.
 
 =back
 
@@ -307,7 +362,7 @@ the elements of the C<@words> that matched approximately.
 
 =back
 
-=head1 ERROR MESSAGES
+=head1 DIAGNOSTICS
 
 =over 8
 
@@ -347,9 +402,27 @@ explanation why this happens.
 
 =back
 
+=head1 TIPS
+
+=over 8
+
+=item transposes
+
+To match transposed letters (as in "trasnposed") use substitutions = 2.
+
+=item case ignorance
+
+Avoid this, the speed is halved.
+
+=item stingy matching
+
+Also this tends to be somewhat slower.
+
+=back
+
 =head1 VERSION
 
-Version 2.2.
+Version 2.3.
 
 =head1 LIMITATIONS
 
@@ -361,7 +434,7 @@ C<asubstitute()> is a bit more flexible than that but not by much.
 
 =head2 Pattern length
 
-The approximate matching algorithm is B<very aggressive>.  In
+The used approximate matching algorithm is B<very aggressive>.  In
 mathematical terms it is I<O(exp(n) * k**2)>. This means that
 when the pattern length and/or the approximateness grows the
 matching or substitution take much longer time and memory.
@@ -376,15 +449,12 @@ you must use shorter patterns.
 
 =head2 Speed
 
-I<Despite the about 20-fold speed increase> from the C<String::Approx>
-I<version 1> B<agrep is still faster>.  If you do not know what
-C<agrep> is: it is a program like the UNIX grep but it knows, among
-other things, how to do approximate matching.  C<agrep> is still about
-30 times faster than I<Perl> + C<String::Approx>.  B<NOTE>: all these
-speeds were measured in one particular system using one particular set
-of tests: your mileage will vary.
+We are still now at release 2.3 about 100 times slower than B<agrep>.
 
-For long patterns, more than about B<40>, the first 
+If you do not know what C<agrep> is: it is a program like the UNIX
+grep but it knows, among other things, how to do approximate matching.
+B<NOTE>: all these speeds were measured in one particular system using
+one particular set of tests: your mileage will vary.
 
 =head2 Incompatibilities with C<String::Approx> I<v1.*>
 
@@ -409,7 +479,21 @@ Jarkko Hietaniemi C<E<lt>jhi@iki.fiE<gt>>
 
 =head1 ACKNOWLEDGEMENTS
 
-Nathan Torkington C<E<lt>gnat@frii.comE<gt>>
+	Alberto Fontaneda C<E<lt>alberfon@ctv.esE<gt>>
+	Dmitrij Frishman C<E<lt>frishman@mips.biochem.mpg.deE<gt>>
+	Lars Gregersen C<E<lt>lars.gregersen@private.dkE<gt>>
+	Håkan Kjellerstrand C<E<lt>hakank@netch.seE<gt>>
+	Nathan Torkington C<E<lt>gnat@frii.comE<gt>>
+
+Alberto Fontaneda and Dmitrij Frishman found a bug in long patterns,
+suggested a test, and tested the patch.
+
+Lars Gregersen saw String::Approx 2.2 and Håkan Kjellerstrand's MakeRegex
+and that moment he experienced a genuine Eureka.  The result: up to thirty
+times faster String::Approx.  (MakeRegex was used for completely other
+purposes).
+
+Nathan Torkington is to blame for the new API of release 2. :-)
 
 =cut
 
@@ -420,8 +504,7 @@ $^W = 1;
 
 use vars qw($PACKAGE $VERSION $compat1
 	    @ISA @EXPORT_OK
-	    %P @aL @dL @Pl %Pp
-	    $DEBUG);
+	    %P @aL @dL @Pl %Pp);
 
 $PACKAGE = 'String::Approx';
 $VERSION = '2.0';
@@ -432,61 +515,177 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-@EXPORT_OK = qw(amatch asubstitute);
-
-$DEBUG = 0;
+@EXPORT_OK = qw(amatch asubstitute aregex);
 
 # Catch the 'compat1' tag.
 
 sub import {
     my $this = shift;
     my (@list, $sym);
-    for $sym (@_) { $sym eq 'compat1' ? $compat1 = 1 : push(@list, $sym) }
+    foreach $sym (@_) { $sym eq 'compat1' ? $compat1 = 1 : push(@list, $sym) }
     local $Exporter::ExportLevel = 1; 
     Exporter::import($this, @list);
-}
-
-sub debug {
-    if (@_ == 1 and $_[0] =~ /^[\d+]$/) {
-	$DEBUG = shift;
-    } else {
-	print STDERR @_ if $DEBUG;
-    }
 }
 
 sub _estimate {
     my ($l, $m) = @_;
     my $p = 5 ** ($m + 2);
 
-    # trust me, I know what I am doing.
+    # Trust me, I know what I am doing.
     (3 * $p * $l ** 2 + (8 - $p) * $l - $p) / 8;
+    # That was before the prefix optimizer and the stinginess.
+    # Currently this is too aggressive (meaning too hasty
+    # partitioning), the aggressiveness is overestimated,
+    # both the optimizer and the stinginess should bring it down.
+    # One of these lifetimes I will derive the new correct formula.
+}
+
+sub _common_suffix_find {
+    my @list = @_;
+    my ($s, $t) = (0, -1);
+    my ($l, $c, $n, $min);
+    
+    $min = length($list[0]);
+    foreach (@list[1..$#list]) {
+	$l = length;
+	$min = $l if $l < $min;
+    }
+
+    while ( $s < $min ) {
+	$c = substr($list[0], $t, 1);
+	# Wimp out on potential metacharacters.
+	last if $c =~ /[\.\)\]\?]$/;
+	$n = 1;
+	foreach (@list[1..$#list]) {
+	    last unless substr($_, $t, 1) eq $c;
+	    $n++;
+	}
+	last if $n < @list;
+	$s++;
+	$t--;
+    }
+
+    $t == -1 ? '' : substr($list[0], $t+1);
+}
+
+# The _common_prefix_optimize() borrows heavily for the
+# MakeRegex module by Håkan Kjellerstrand <hakank@netch.se>
+# that from a list of words computes a fast regular expression
+# that matches those words.  Changed (?:...) added (as noted
+# by Lars Gregersen <lars.gregersen@private.dk>), added more
+# [] instead of (), added lookahead (?=), added simple suffix
+# optimization (most of this code is dead code for String::Approx,
+# however, and is removed from here).
+
+sub _common_prefix_optimize {
+  my ($std, $p, @list)=@_;
+  
+  return "$p@list" if @list == 1;
+  
+  my ( %hash, $prefix, @all );
+
+  foreach ( sort @list ) {
+    $prefix = substr( $_, 0, 1 );
+    push ( @{ $hash{ $prefix } }, length( ) > 1 ? substr( $_, 1 ) : '' );
+  }
+  
+  my $question = 0;
+
+  foreach ( sort keys %hash ) { # Recurse.
+    my $comm = _common_prefix_optimize( $std, $_, @{ $hash{ $_ } } );
+    $question = 1 if $comm eq "";
+    push( @all, $comm );
+  }
+
+  my $paren = "";
+  
+  if ( @all == 1 ) {
+    $paren = "@all";
+  } else {
+    my $maxlen = 0;  
+    my $any    = 0;
+    my $len;
+    foreach ( @all ) {
+	$len = length;
+	$maxlen = $len > $maxlen ? $len : $maxlen;
+	$any++ if /^\./;
+    }
+
+    my $mark = $question ? "?" : "";
+    my $join;
+    my $cando_lookahead = 0;
+    my $suffix = @all ? _common_suffix_find( @all ) : '';
+    # If we have pure-\w non-empty suffixes.
+    if ( @all > 1 && $maxlen > 1 && length $suffix && not $suffix =~ /\W/ ) {
+	my $sufflen = length $suffix;
+	foreach ( @all ) { # Remove the suffix.
+	    substr( $_, -$sufflen ) = '';
+	}
+	# Very heavy manual optimization took place here.
+	# Two conditional branches out of three were removed.
+	# I may have been wrong.  If that is the case,
+	# this will produce illegal regexps.  That's life.
+	# The cases that were removed apply in the general
+	# case of doing prefix optimization, but not now.
+	@all = grep length, @all;
+	$join = "@all?$suffix";
+    } else {
+	my ( @l1, @lp );
+	if ( $maxlen > 1 ) {
+	    @l1 = grep { length() == 1 } @all;
+	    @lp = grep { length() >  1 } @all;
+	    push( @lp, @l1 == 1 ? @l1 : "[" . join( "", @l1 ) . "]" ) if @l1;
+	} else {
+	    @lp = @all;
+	}
+	$join = join( ($maxlen == 1) ? "" : "|", @lp );
+	$cando_lookahead = 1;
+    }
+    if ( length $join == 1 ) {
+	$paren = "$join$mark";
+    } else {
+      if ( $maxlen == 1 ) {
+	  $paren = $any ? ".$mark" : "[$join]$mark";
+      } else {
+	  $paren = $std ? "($join)$mark" : "(?:$join)$mark";
+	  if ( $any == 0 && $cando_lookahead && not $std ) {
+	      my %first;
+	      foreach ( @all ) {
+		  $first{ substr( $_,0,1 ) } = undef;
+	      }
+	      my $class = join( '', sort keys %first );
+	      if ( length $class ) {
+		  $class = "[$class]" if length $class > 1;
+		  $paren = "(?=$class)$paren";
+	      }
+	  }
+      }
+    }  
+  }
+  
+  return "$p$paren";
 }
 
 sub _compile {
-    my ($pattern, $I, $D, $S) = @_;
-    debug "_compile: '$_[0]', ", join(', ', @_[2..$#_]), "\n";
+    my ($pattern, $I, $D, $S, $greed, $std) = @_;
     my ($j, $p, %p, %q, $l, $k, $mxm);
     my @p = ();
 
-    $mxm = $I;
+    $mxm = $I;	# maximum modifier
     $mxm = $D if ($D > $mxm);
     $mxm = $S if ($S > $mxm);
 
     $l = length($pattern);
 
-    debug "_compile: mxm = $mxm, l = $l\n";
-
-    # the estimated length of the resulting pattern must be less than 32767
+    # The estimated length of the resulting pattern must be less than 32767.
 
     my $est = _estimate($l, $mxm);
-    debug "_compile: est = $est\n";
 
-    if ($est > 32767) {
-	my ($a, $b, $i);
-	my ($mp, $np);
+    if ($est > 32767) { # The magic limit of Perl.
+	my ( $a, $b, $i );
+	my ( $mp, $np );
 
-	$np = int(log($l));
-	debug "_compile: np = $np\n";
+	$np = int( log( $l ) );
 
 	# compute and cache the partitions per length
 
@@ -500,11 +699,7 @@ sub _compile {
 	    $mp = int($mxm / $np);
 	    $mp = 1 if ($mp < 1);
 
-	    debug "_compile:  np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
-
 	    $est = _estimate($gp, $mp);
-
-	    debug "_compile:  est = $est\n";
 
 	    while ($est > 32767) {
 		# same rule here as above about the length of the pattern.
@@ -514,9 +709,7 @@ sub _compile {
 		$gp = $sp + $fp;
 		$mp = int($mxm / $np);
 		$mp = 1 if ($mp < 1);
-		debug "_compile:    np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
 		$est = _estimate($gp, $mp);
-		debug "_compile:  est = $est\n";
 	    }
 
 	    ($a, $b) = (0, $sp + $fp);
@@ -525,14 +718,11 @@ sub _compile {
 	    $b  = $sp;
 	    for ($i = 1; $i < $np; $i++) {
 		$a += $sp;
-		debug "_compile: a = $a, b = $b\n";
 		push(@{$Pl[$l][$mxm]}, [$a, $b]);
 	    }
 	} else {
 	    $mp = int($mxm / $np);
 	}
-
-	debug "_compile: mp = $mp\n";
 
 	my $pi = $I ? int($mp / $I + 0.9) : 0;
 	my $pd = $D ? int($mp / $D + 0.9) : 0;
@@ -541,7 +731,7 @@ sub _compile {
 	# compute and cache the pattern partitions
 
 	unless (defined $Pp{$pattern}[$mxm]) {
-	    for $i (@{$Pl[$l][$mxm]}) {
+	    foreach $i (@{$Pl[$l][$mxm]}) {
 		push(@{$Pp{$pattern}[$mxm]},
 		     [substr($pattern, $$i[0], $$i[1]), $pi, $pd, $ps]);
 	    }
@@ -557,15 +747,13 @@ sub _compile {
 
     my $pp;		# The current partition.
 
-    for $pp (@p) {	# The partition loop.
+    foreach $pp (@p) {	# The partition loop.
 
 	%p = ();
 
 	my ($i, $d, $s) = @$pp[1..4];	# The per-partition I, D, S.
 
 	$pp = $$pp[0];			# The partition string itself.
-
-	debug "_compile: pp = '$pp', i = $i, d = $d, s = $s\n";
 
 	$p{$pp} = length($pp);
 
@@ -618,7 +806,7 @@ sub _compile {
 	    if ($s) {
 		$s--;
 		while (($p, $l) = each %p) {
-		    for ($j = 0; $j <= $l; $j++) {
+		    for ($j = 0; $j < $l; $j++) {
 			$k = $p;
 			substr($k, $j, 1) = '.';
 			$q{$k} = $l;
@@ -629,11 +817,40 @@ sub _compile {
 	    while (($k, $l) = each %q) { $p{$k} = $l }
 	}
 
-	# the pattern
+	# If stingy, clean leading and trailing ".".
 
-	push(@{$P{$pattern}[$I][$D][$S]},
-	     join('|', sort { length($b) <=> length($a) } keys %p));
+	unless ( $greed ) {
+	    my (%c, $c);
+	    foreach $c (keys %p) {
+		$c =~ s/^\.+//;
+		$c =~ s/\.+$//;
+		$c{$c} = undef;
+	    }
+	    %p = %c;
 
+	    my @lit = sort { length($b) <=> length($a) } keys %p;
+	    my ( $li, $lj, %sh );
+
+	    for ( $li = 0; $li < @lit; $li++ ) {
+		for ( $lj = $li + 1; $lj < @lit; $lj++ ) {
+		    if ( length $lit[ $lj ] < length $lit[ $li ]
+			 and
+			 $lj =~ /$li/ ) {
+			$sh{ $lj } = undef;
+		    }
+		}
+	    }
+
+	    # Be pre-5.004-compatible.
+	    foreach $c ( keys %sh ) {
+		delete $p{ $c };
+	    }
+	}
+
+	# The pattern.
+
+	push(@{$P{$pattern}[$I][$D][$S][$greed][$std]},
+             _common_prefix_optimize($std, "", keys %p));
     }
 }
 
@@ -642,7 +859,7 @@ sub _mods {
     my $remods = '';
     my $mod;
 
-    for $mod (@$mods) {
+    foreach $mod (@$mods) {
 	while ($mod ne '') {
 	    if ($mod =~ s/^([IDS]?)(\d+)(%?)//) {
 		if ($1 ne '') {
@@ -666,6 +883,10 @@ sub _mods {
 		$remods .= $1;
 	    } elsif ($mod =~ s/^([ig])//) {
 		$remods .= $1;
+	    } elsif ($mod =~ s/^\?//) {
+		# Just accept it.
+	    } elsif ($mod =~ s/^std//) {
+		# Just accept it.
 	    } else {
 		die $PACKAGE, ": unknown modifier '$mod'\n";
 	    }
@@ -692,28 +913,28 @@ sub _mids {
     ($aI, $aD, $aS);
 }
 
-sub amatch {
-    my ($pattern, @list) = @_;
-    debug "_amatch: ", join(', ', "'$pattern'",
-			    map { ref $_ ?
-				      "[@{[join(', ', @$_)]}]" :
-				      "'$_'" }
-			        @list), "\n";
+sub _amatch {
+    my ($pattern, $list) = @_;
+
     my ($aI, $aD, $aS, $rI, $rD, $rS);
 
     my $len = length($pattern);
-
     my $remods;
+    my $greed = 1;
+    my $std    = 0;
 
-    if (ref $list[0] or $compat1) {
+    if (ref $$list[0] or $compat1) {
 	my $mods;
 
 	if ($compat1) {
-	    $mods = [ @list ];
-	    @list = ();
+	    $mods = [ $$list[0] ];
+	    @$list = ();
 	} else {
-	    $mods = shift(@list);
+	    $mods = shift(@$list);
 	}
+
+	$greed = 0 if grep { /\?/ } @$mods;
+	$std    = 1 if grep { /std/ } @$mods;
 
 	$remods = _mods($mods, \$aI, \$aD, \$aS, \$rI, \$rD, \$rS);
 
@@ -723,82 +944,74 @@ sub amatch {
 	$aI = $aD = $aS = $dL[$len];
     }
 
+    _compile($pattern, $aI, $aD, $aS, $greed, $std)
+	unless ref $P{$pattern}[$aI][$aD][$aS][$greed][$std];
+
+    ( $len, $aD, $remods, @{$P{$pattern}[$aI][$aD][$aS][$greed][$std]} );
+}
+
+sub amatch {
+    my ( $pattern, @list ) = @_;
+
+    my ( $len, $aD, $remods, @mpat ) = _amatch( $pattern, \@list );
+
     die "amatch: \$_ is undefined: what are you matching against?\n"
 	if (not defined $_ and @list == 0);
 
-    _compile($pattern, $aI, $aD, $aS)
-	unless ref $P{$pattern}[$aI][$aD][$aS];
-
-    my @mpat = @{$P{$pattern}[$aI][$aD][$aS]};
     my $mpat;
 
-    if (@mpat == 1) {
+    @list = grep { length() > $len - $aD } @list if @list and $aD;
 
-	debug "amatch: simple match\n";
+    if (@mpat == 1) {
 
 	$mpat = $mpat[0];
 
 	$mpat = '(?' . $remods . ')' . $mpat if defined $remods;
-
-	debug "mpat = $mpat\n";
 
 	if (@list) {
 
 	    # match against the @list
 
 	    my @m = eval { grep /$mpat/, @list };
-	    debug "amatch: m = @m\n";
-	    die "amatch: too long pattern.\n"
-		if ($@ =~ /regexp too big/);
+	    die "amatch: too long pattern.\n" if ($@ =~ /regexp too big/);
 	    return @m;
 	}
 
-	debug "amatch: matching against the \$_\n";
+	# match against the $_
 
-	my $m;
+	my $matched;
 
-	eval { $m = /$mpat/ };
-	debug "amatch: m = $m\n";
-	die "amatch: too long pattern.\n"
-	    if ($@ =~ /regexp too big/);
-	return ($_) if $m;
+	eval { $matched = /$mpat/ };
+	die "amatch: too long pattern.\n" if ($@ =~ /regexp too big/);
+	return ($_) if $matched;
 
     } else {
-
-	debug "amatch: partitioned match\n";
 
 	if (@list) {
 
 	    # match against the @list
 
-	    my @pos = ();
-	    my @bad = ();
+	    my @pos;
+	    my @bad;
 	    my ($i, $bad);
 
-	    for $mpat (@mpat) {
-		debug "amatch: mpat = $mpat\n";
+	    foreach $mpat (@mpat) {
 		if (@pos) {
 		    my $s;
-		    for $s (@list) {
+		    foreach $s (@list) {
 			pos($s) = shift(@pos);
-			debug "amatch: before: pos($s) = ", pos($s), ", ",
-			      substr($s, 0, pos($s)), "\n";
 		    }
 		} else {
 		    @pos = ();
 		}
 		for ($i = $bad = 0; $i < @list; $i++) {
-		    debug "amatch: list[$i] = $list[$i]\n";
 		    unless ($bad[$i]) {
 			if (eval { $list[$i] =~ /$mpat/g }) {
 			    die "amatch: too long pattern.\n"
 				if ($@ =~ /regexp too big/);
 			    $pos[$i] = pos($list[$i]);
-			    debug "amatch: after: pos[$i] = $pos[$i], ",
-			           substr($list[$i], 0, $pos[$i]), "\n";
 			} else {
 			    $bad[$i] = $bad++;
-			    debug "amatch: bad[$i] = $bad[$i]\n";
 			    return () if $bad == @list;
 			}
 		    }
@@ -808,18 +1021,17 @@ sub amatch {
 	    my @got = ();
 
 	    for ($i = 0; $i < @list; $i++) {
-		push(@got, $list[$i]) unless defined $bad[$i];
+		push(@got, $list[$i]) unless $bad[$i];
 	    }
 
 	    return @got;
 	}
 	
-	debug "amatch: matching against the \$_\n";
+	# match against the $_
 
 	while ($mpat = shift(@mpat)) {
 	    return () unless eval { /$mpat/g };
-	    die "amatch: too long pattern.\n"
-		if ($@ =~ /regexp too big/);
+	    die "amatch: too long pattern.\n" if ($@ =~ /regexp too big/);
 	    return ($_) if (@mpat == 0);
 	}
     }
@@ -844,16 +1056,21 @@ sub asubstitute {
     my $len = length($pattern);
 
     my $remods;
+    my $greed = 1;
+    my $std    = 0;
 
     if ($compat1 or ref $list[0]) {
 	my $mods;
 
 	if ($compat1) {
-	    $mods = [ @list ];
+	    $mods = [ $list[0] ];
 	    @list = ();
 	} else {
 	    $mods = shift(@list);
 	}
+
+	$greed = 0 if grep { /\?/ } @$mods;
+	$std    = 1 if grep { /std/ } @$mods;
 
 	$remods = _mods($mods, \$aI, \$aD, \$aS, \$rI, \$rD, \$rS);
 
@@ -866,10 +1083,10 @@ sub asubstitute {
     die "asubstitute: \$_ is undefined: what are you matching against?\n"
 	if (not defined $_ and @list == 0);
 
-    _compile($pattern, $aI, $aD, $aS)
-	unless defined $P{$pattern}[$aI][$aD][$aS];
+    _compile($pattern, $aI, $aD, $aS, $greed, $std)
+	unless defined $P{$pattern}[$aI][$aD][$aS][$greed][$std];
 
-    my @spat = @{$P{$pattern}[$aI][$aD][$aS]};
+    my @spat = @{$P{$pattern}[$aI][$aD][$aS][$greed][$std]};
     my $spat = $spat[0];
     
     $spat = '(?' . $remods . ')' . $spat if defined $remods;
@@ -877,7 +1094,7 @@ sub asubstitute {
     if (@list) {
 	my (@m, $sm, $s);
 
-	for $sm (@list) {
+	foreach $sm (@list) {
 	    eval { $s = $sm =~ s/($spat)/_subst($sub, $`, $1, $')/e };
 	    die "asubstitute: too long pattern, maximum pattern length 19.\n"
 		if ($@ =~ /regexp too big/);
@@ -898,6 +1115,16 @@ sub asubstitute {
     return ($_) if $s;
 
     ();
+}
+
+sub aregex {
+    my ( $pattern, @list ) = @_;
+    
+    my @mpat = _amatch( $pattern, \@list );
+
+    splice( @mpat, 0, 3 ); # Junk first three.
+
+    @mpat;
 }
 
 1;

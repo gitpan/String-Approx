@@ -1,0 +1,12 @@
+Release
+
+2.3	- Speed doubled from the release 2.2.
+
+	- Stingy matching is now available.
+
+	- Also the greedy matching got a little bit stingier:
+	  earlier a match contained the next character if possible,
+	  for example one unused deletion.  It does that no more.
+	  This is evident in the $` $& $' and asubstitute().
+
+	  	

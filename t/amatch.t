@@ -4,11 +4,15 @@ chdir('t') or die "could not chdir to 't'";
 
 require 't'; # har har
 
-print "1..11\n";
+print "1..12\n";
+
+# String::Approx::debug(1);
 
 # test 1
 
-open(WORDS, 'words') or die "could not find 'words'";
+open(WORDS, 'words') or die "could not find words";
+
+my @words = <WORDS>;
 
 t(
   [qw(
@@ -23,15 +27,11 @@ t(
       superappeal
       superlative
      )],
-  [amatch('perl', <WORDS>)]);
+  [amatch('perl', @words)]);
 print "ok 1\n";
-
-close(WORDS);
 
 # test 2: same as 1 but no insertions allowed
 
-open(WORDS, 'words') or die;
-
 t(
   [qw(
       appeal
@@ -44,15 +44,11 @@ t(
       superappeal
       superlative
      )],
-  [amatch('perl', ['I0'], <WORDS>)]);
+  [amatch('perl', ['I0'], @words)]);
 print "ok 2\n";
-
-close(WORDS);
 
 # test 3: same as 1 but no deletions allowed
 
-open(WORDS, 'words') or die;
-
 t(
   [qw(
       appeal
@@ -64,14 +60,10 @@ t(
       superappeal
       superlative
      )],
-  [amatch('perl', ['D0'], <WORDS>)]);
+  [amatch('perl', ['D0'], @words)]);
 print "ok 3\n";
 
-close(WORDS);
-
 # test 4: same as 1 but no substitutions allowed
-
-open(WORDS, 'words') or die;
 
 t(
   [qw(
@@ -84,14 +76,10 @@ t(
       superappeal
       superlative
      )],
-  [amatch('perl', ['S0'], <WORDS>)]);
+  [amatch('perl', ['S0'], @words)]);
 print "ok 4\n";
 
-close(WORDS);
-
 # test 5: 2-differences
-
-open(WORDS, 'words') or die;
 
 t(
   [qw(
@@ -120,14 +108,10 @@ t(
       twirl
       zealous
      )],
-  [amatch('perl', [2], <WORDS>)]);
+  [amatch('perl', [2], @words)]);
 print "ok 5\n";
 
-close(WORDS);
-
 # test 6: i(gnore case)
-
-open(WORDS, 'words') or die;
 
 t(
   [qw(
@@ -143,10 +127,8 @@ t(
       superappeal
       superlative
      )],
-  [amatch('perl', ['i'], <WORDS>)]);
+  [amatch('perl', ['i'], @words)]);
 print "ok 6\n";
-
-close(WORDS);
 
 # test 7: test for undefined input
 
@@ -182,11 +164,33 @@ print "ok 10\n";
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
 # for this test case and also thanks to Dmitrij Frishman
 # <frishman@mips.biochem.mpg.de> for testing this test.
+{
 my @l = ('perl warks fiine','parl works fine', 'perl worrs', 'perl warkss');
 my @m = amatch('perl works fin', [2] , @l);
 print 'not ' if not @m == 2 or
                 $m[0] ne 'perl warks fiine' or
                 $m[1] ne 'parl works fine';
 print "ok 11\n";
+#print "m = (@{[join(':',@m)]})\n";
+}
+
+# test 12: test stingy matching.
+
+t(
+  [qw(
+      appeal
+      dispel
+      erlangen
+      hyperbola
+      merlin
+      parlance
+      pearl
+      perk
+      superappeal
+      superlative
+     )],
+  [amatch('perl', ['?'], @words)]);
+
+print "ok 12\n";
 
 # eof

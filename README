@@ -11,8 +11,11 @@ changed.  Read on to find out why this change was made.
 
 I am very sorry about this incompatibility but there are bonuses.
 
-	- String::Approx is now about 20 times faster than before.
-	  If you do not believe me try it out.
+	- String::Approx is now (release 2.3) about 40 times faster
+	  than release 1.6 was.  From release 2.2 we had a speed
+	  jump by factor or two thanks to Håkan Kjellerstrand
+	  and Lars Gregersen.
+
 	- there is now a much more natural syntax:
 
 	@matched     = amatch     ("pattern", @match_from_these);

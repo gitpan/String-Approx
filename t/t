@@ -8,7 +8,12 @@ sub t {
 	for $wa (@$a) {
 	    $wb = shift(@$b);
 	    $db = defined $wb;
-	    chomp($wb) if $db;
+	    if ($db) {
+	        $wa =~ s/^\s+//;
+	        $wa =~ s/\s+$//;
+	        $wb =~ s/^\s+//;
+	        $wb =~ s/\s+$//;
+	    }
 	    if (not $db or $wa ne $wb) {
 #		print STDERR "ne: $wa $wb\n";
 		print 'not ';

@@ -1,0 +1,62 @@
+use Config;
+use IO::Handle;
+
+use lib 'blib';
+use String::Approx 'amatch';
+
+autoflush STDOUT 1;
+
+print "Benchmarking...\n";
+
+@pods = glob("$Config{installprivlib}/pod/*.pod") ;
+
+print "Calibrating...";
+
+$bytes = 0;
+foreach $file ( @pods ) {
+    if (open(POD, $file)) {
+	($u0, $s0) = times();
+	while (<POD>) {
+	    $bytes += length();
+	}
+	($u1, $s1) = times();
+	$us0 += $u1 - $u0 + $s1 - $s0;
+	close(POD);
+    }
+}
+print "done.\n";
+
+print "Running...\n";
+
+my @words = qw(return context camel chimera);
+my $words = @words;
+my $wordi = 0;
+
+my $bytes = 0;
+foreach $word ( @words ) {
+    print ++$wordi, "/$words...\r";
+    foreach $file ( @pods ) {
+	if (open(POD, $file)) {
+	    ($u0, $s0) = times();
+	    while (<POD>) {
+		@m = amatch($word,[q(i)]);
+		$mtc{$wordi} += @m;
+		$bytes += length();
+	    }
+	    ($u1, $s1) = times();
+	    $us1{$wordi} += $u1 - $u0 + $s1 - $s0;
+	    close(POD);
+	}
+    }
+}
+print "done.\n";
+
+foreach $wordi ( sort { $a <=> $b} keys %us1 ) {
+    $dus = $us1{$wordi} - $us0;
+    $megabytes = $bytes / 1048576;
+    printf("%2d %4d %7.3f MB %7.3f s %7.3f MB/s\n",
+	   $wordi, $mtc{$wordi}, $megabytes, $dus, $megabytes/$dus);
+}
+
+
+
