@@ -2,7 +2,7 @@ use String::Approx qw(adist adistr adistword adistrword);
 
 chdir('t') or die "could not chdir to 't'";
 
-print "1..25\n";
+print "1..26\n";
 
 print "not " unless adist("abc", "abc") == 0;
 print "ok 1\n";
@@ -86,4 +86,12 @@ my @a = adist("abc", "abd", "ade", "def");
 
 print "not " unless $a[2] == 3;
 print "ok 25\n";
+
+{
+    my @abd = ("abd", "bad");
+    my @r = adistr("abc", @abd);
+    print "not " unless @r == 2 && $r[0] == 1/3 && $r[1] == 2/3;
+    print "ok 26\n";
+}
+
 

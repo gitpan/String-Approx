@@ -1,4 +1,18 @@
-Mon May 12 22:09:59 2003  Jarkko Hietaniemi  <jhi@ovipunen.hut.fi>
+Sun Oct 19 12:17:20 2003  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* adistr($pattern, @inputs) returned absolute, not relative,
+	  distances in list context, reported by 'idallen'.
+	
+	* Released as 3.22.
+
+Sat Oct 18 10:29:30 2003  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* asubstitute() didn't substitute in $_ as promised,
+	  reported by Tim Maher.
+	
+	* Released as 3.21.
+
+Mon May 12 22:09:59 2003  Jarkko Hietaniemi  <jhi@iki>
 
 	* Bug report, analysis, and patch from Rich Williams for
 	  a nasty segfault (no easy test case, sadly).

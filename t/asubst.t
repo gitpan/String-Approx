@@ -4,7 +4,7 @@ chdir('t') or die "could not chdir to 't'";
 
 require 'util';
 
-print "1..10\n";
+print "1..11\n";
 
 # test 1
 
@@ -193,15 +193,23 @@ print "ok 8\n";
 
 close(WORDS);
 
-# test 9: test for undefined input
+# test 9: $_
+
+$_ = "foo";
+eval 'asubstitute("foo","bar")';
+print "not " unless $_ eq 'bar';
+print "ok 9\n";
+$_ = 'foo'; # anything defined so later tests do not fret
+
+# test 10: test for undefined input
 
 undef $_;
 eval 'asubstitute("foo","bar")';
 print 'not ' unless ($@ =~ /what are you substituting/);
-print "ok 9\n";
+print "ok 10\n";
 $_ = 'foo'; # anything defined so later tests do not fret
 
-# test 10: test fuzzier subsitution.
+# test 11: test fuzzier subsitution.
 
 open(WORDS, 'words') or die;
 
@@ -233,7 +241,7 @@ t(
       z(z:eal:ous)ous
    )],
   [asubstitute('perl', q(($`:$&:$')), [q(2)], map {chomp;$_} <WORDS>)]);
-print "ok 10\n";
+print "ok 11\n";
 
 close(WORDS);
 

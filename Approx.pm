@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = '3.20';
+$VERSION = '3.22';
 
 use strict;
 local $^W = 1;
@@ -303,18 +303,6 @@ sub asubstitute {
 	(@_ && ref $_[0] eq 'ARRAY') ?
 	    _complex($P, @{ shift(@_) }) : _simple($P);
 
-    unless (length $P) {
-	if (@_) {
-	    foreach (@_) {
-		$_ = $S . $_;
-	    }
-	} elsif (defined $_) {
-	    $_ = $S . $_;
-	} else {
-	    die "asubstitute: \$_ is undefined: what are you substituting?\n";
-	}
-    }
-
     my ($i, $s, @i, @s, @n, @S);
 
     if (@_) {
@@ -354,7 +342,7 @@ sub asubstitute {
 		_do_substitute(\@n, \@i, \@s, \@S);
 	    }
 	}
-	return $n[0];
+	return $_ = $n[0];
     } else {
 	die "asubstitute: \$_ is undefined: what are you substituting?\n";
     }
@@ -430,7 +418,7 @@ sub adistr {
     my @m = ref $_[0] eq 'ARRAY' ? shift : ();
     if (ref $a0 eq 'ARRAY') {
 	if (ref $a1 eq 'ARRAY') {
-	    my $l0 = length($a0);
+	    my $l0 = length();
 	    return $l0 ? [ map { adist($a0, $_, @m) }
 			  @{$a1} ] :
 		         [ ];
@@ -444,10 +432,10 @@ sub adistr {
 	return [] unless $l0;
 	return     [ map { _adist($a0, $_, @m) / $l0 } @{$a1} ];
     } else {
+	my $l0 = length($a0);
 	if (wantarray) {
-	    return map { _adist($a0, $_, @m) } ($a1, @_);
+	    return map { $l0 ? _adist($a0, $_, @m) / $l0 : undef } ($a1, @_);
 	} else {
-	    my $l0 = length($a0);
 	    return undef unless $l0;
 	    return _adist($a0, $a1, @m) / $l0;
 	}
@@ -857,12 +845,12 @@ Jared August, Arthur Bergman, Anirvan Chatterjee, Steve A. Chervitz,
 Aldo Calpini, David Curiel, Teun van den Dool, Alberto Fontaneda,
 Rob Fugina, Dmitrij Frishman, Lars Gregersen, Kevin Greiner,
 B. Elijah Griffin, Mike Hanafey, Mitch Helle, Ricky Houghton,
-Helmut Jarausch, Damian Keefe, Ben Kennedy, Craig Kelley,
-Franz Kirsch, Dag Kristian, Mark Land, J. D. Laub, Juha Muilu,
-Sergey Novoselov, Andy Oram, Eric Promislow, Nikolaus Rath,
-Stefan Ram, Dag Kristian Rognlien, Stewart Russell, Slaven Rezic,
-Chris Rosin, Pasha Sadri, Ilya Sandler, Bob J.A. Schijvenaars,
-Ross Smith, Frank Tobin, Greg Ward, Rick Wise.
+'idallen', Helmut Jarausch, Damian Keefe, Ben Kennedy, Craig Kelley,
+Franz Kirsch, Dag Kristian, Mark Land, J. D. Laub, Tim Maher,
+Juha Muilu, Sergey Novoselov, Andy Oram, Ji Y Park, Eric Promislow,
+Nikolaus Rath, Stefan Ram, Dag Kristian Rognlien, Stewart Russell,
+Slaven Rezic, Chris Rosin, Pasha Sadri, Ilya Sandler, Bob J.A. Schijvenaars,
+Ross Smith, Frank Tobin, Greg Ward, Rich Williams, Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.
@@ -873,7 +861,7 @@ Jarkko Hietaniemi <jhi@iki.fi>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2001 by Jarkko Hietaniemi
+Copyright 2001-2003 by Jarkko Hietaniemi
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
