@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.16;
+$VERSION = 3.17;
 
 use strict;
 local $^W = 1;
@@ -854,5 +854,16 @@ Gopal in the Department of Computer Science, University of Arizona.
 =head1 AUTHOR
 
 Jarkko Hietaniemi <jhi@iki.fi>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2001 by Jarkko Hietaniemi
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+Furthermore: no warranties or obligations of any kind are given, and
+the separate file F<COPYRIGHT> must be included intact in all copies
+and derived materials.
 
 =cut
