@@ -1,3 +1,10 @@
+Thu Jun 28 23:50:14 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+
+	* Releases as 3.16.
+
+	* Ben Kennedy found yet another silly memory leak,
+	  in Approx.pm:_complex() this time.
+
 Sat Feb 10 04:18:09 2001  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
 
 	* Rewrote _simple() and _complex(), now the silly memory

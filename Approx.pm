@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.15;
+$VERSION = 3.16;
 
 use strict;
 local $^W = 1;
@@ -218,7 +218,7 @@ sub _complex {
 
 	# If our cache overfloweth.
 	if (scalar keys %_complex_usage_count > $CACHE_MAX) {
-	    _cache_flush_simple($P);
+	    _cache_flush_complex($P);
 	}
     }
 
