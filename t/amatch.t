@@ -4,7 +4,7 @@ chdir('t') or die "could not chdir to 't'";
 
 require 't'; # har har
 
-print "1..10\n";
+print "1..11\n";
 
 # test 1
 
@@ -177,5 +177,16 @@ print "ok 9\n";
 $_ = 'xyz' x 10 . 'abc0de1fghijabcdefghij' . 'zyx' x 10;
 print 'not ' if amatch('abcdefghij' x 2);
 print "ok 10\n";
+
+# test 11: test long pattern both matching and not matching
+# Thanks to Alberto Fontaneda <alberfon@ctv.es>
+# for this test case and also thanks to Dmitrij Frishman
+# <frishman@mips.biochem.mpg.de> for testing this test.
+my @l = ('perl warks fiine','parl works fine', 'perl worrs', 'perl warkss');
+my @m = amatch('perl works fin', [2] , @l);
+print 'not ' if not @m == 2 or
+                $m[0] ne 'perl warks fiine' or
+                $m[1] ne 'parl works fine';
+print "ok 11\n";
 
 # eof

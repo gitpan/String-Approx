@@ -43,10 +43,11 @@ regex terms C<\*>, not I<"match 0 or more times">.
 The LIST is the list of strings to match against the pattern.
 If no LIST is given matches against C<$_>.
 
-The MODS are the modifiers that tell how approximately to match.
-See below for more detailed explanation.
-B<NOTE>: The syntax really is C<[ @MODS ]>, the square
-brackets C<[ ]> must be in there.  See below for examples.
+The MODS are the modifiers that tell how approximately to match.  See
+below for more detailed explanation.  B<NOTE>: The syntax really is
+C<[ @MODS ]>, the square brackets C<[ ]> must be in there and it is
+B<not> a string, no quotes of any kind around the C<[ ]>.  It is
+an anonymous array, see L<perlref>.  See below for MODS examples.
 
 In scalar context C<amatch()> returns the number of successful
 matches.  In list context C<amatch()> returns the strings that
@@ -108,10 +109,11 @@ the part I<after> the approximate match
 
 =back
 
-The MODS are the modifiers that tell how approximately to match.
-See below for more detailed explanation.
-B<NOTE>: Yes, the syntax is really C<[ @MODS ]>, the square
-brackets C<[ ]> must be in there.  See below for examples.
+The MODS are the modifiers that tell how approximately to match.  See
+below for more detailed explanation.  B<NOTE>: Yes, the syntax is
+really C<[ @MODS ]>, the square brackets C<[ ]> must be in there and
+it is B<not> a string, no quotes of any kind around the C<[ ]>.  It
+is an anonymous array, see L<perlref>.  See below for MODS examples.
 
 The LIST is the list of strings to substitute against the pattern.
 If no LIST is given substitutes against C<$_>.
@@ -140,10 +142,11 @@ or the same ignoring case:
 
 =head2 Modifiers
 
-The MODS argument both in amatch() and asubstitute() is a list of
-strings that control the matching of PATTERN.  The first two, B<i> and
-B<g>, are the usual regular expression match/substitute modifiers, the
-rest are special for approximate matching/substitution.
+The MODS argument both in amatch() and asubstitute() is an anonymous
+array (see L<perlref>) of strings that control the matching of
+PATTERN.  The first two possible strings, B<i> and B<g>, are the usual
+regular expression match/substitute modifiers, the rest are special
+for approximate matching/substitution.
 
 =over 8
 
@@ -346,7 +349,7 @@ explanation why this happens.
 
 =head1 VERSION
 
-Version 2.1.
+Version 2.2.
 
 =head1 LIMITATIONS
 
@@ -359,7 +362,7 @@ C<asubstitute()> is a bit more flexible than that but not by much.
 =head2 Pattern length
 
 The approximate matching algorithm is B<very aggressive>.  In
-mathematical terms it is I<O(exp(n) * x**2)>. This means that
+mathematical terms it is I<O(exp(n) * k**2)>. This means that
 when the pattern length and/or the approximateness grows the
 matching or substitution take much longer time and memory.
 
@@ -417,7 +420,8 @@ $^W = 1;
 
 use vars qw($PACKAGE $VERSION $compat1
 	    @ISA @EXPORT_OK
-	    %P @aL @dL @Pl %Pp);
+	    %P @aL @dL @Pl %Pp
+	    $DEBUG);
 
 $PACKAGE = 'String::Approx';
 $VERSION = '2.0';
@@ -430,6 +434,8 @@ require Exporter;
 
 @EXPORT_OK = qw(amatch asubstitute);
 
+$DEBUG = 0;
+
 # Catch the 'compat1' tag.
 
 sub import {
@@ -440,16 +446,25 @@ sub import {
     Exporter::import($this, @list);
 }
 
+sub debug {
+    if (@_ == 1 and $_[0] =~ /^[\d+]$/) {
+	$DEBUG = shift;
+    } else {
+	print STDERR @_ if $DEBUG;
+    }
+}
+
 sub _estimate {
     my ($l, $m) = @_;
     my $p = 5 ** ($m + 2);
 
+    # trust me, I know what I am doing.
     (3 * $p * $l ** 2 + (8 - $p) * $l - $p) / 8;
 }
 
 sub _compile {
     my ($pattern, $I, $D, $S) = @_;
-#    print STDERR "_compile(@_)\n";
+    debug "_compile: '$_[0]', ", join(', ', @_[2..$#_]), "\n";
     my ($j, $p, %p, %q, $l, $k, $mxm);
     my @p = ();
 
@@ -459,24 +474,25 @@ sub _compile {
 
     $l = length($pattern);
 
-#    print "mxm = $mxm, l = $l\n";
+    debug "_compile: mxm = $mxm, l = $l\n";
 
     # the estimated length of the resulting pattern must be less than 32767
 
     my $est = _estimate($l, $mxm);
+    debug "_compile: est = $est\n";
 
     if ($est > 32767) {
 	my ($a, $b, $i);
-	my $mp;
+	my ($mp, $np);
 
-#	print "est = $est\n";
+	$np = int(log($l));
+	debug "_compile: np = $np\n";
 
 	# compute and cache the partitions per length
 
 	unless (defined $Pl[$l][$mxm]) {
-	    my ($np, $sp, $fp, $gp);
+	    my ($sp, $fp, $gp);
 
-	    $np = int(log($l)) + 1;
 	    $np = 2 if ($np < 2);
 	    $sp = int($l / $np);
 	    $fp = $l - $np * $sp;
@@ -484,11 +500,11 @@ sub _compile {
 	    $mp = int($mxm / $np);
 	    $mp = 1 if ($mp < 1);
 
-#	    print "  np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
+	    debug "_compile:  np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
 
 	    $est = _estimate($gp, $mp);
 
-#	    print "  est = $est\n";
+	    debug "_compile:  est = $est\n";
 
 	    while ($est > 32767) {
 		# same rule here as above about the length of the pattern.
@@ -498,9 +514,9 @@ sub _compile {
 		$gp = $sp + $fp;
 		$mp = int($mxm / $np);
 		$mp = 1 if ($mp < 1);
-#		print "    np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
+		debug "_compile:    np = $np, sp = $sp, fp = $fp, gp = $gp, mp = $mp\n";
 		$est = _estimate($gp, $mp);
-#		print "  est = $est\n";
+		debug "_compile:  est = $est\n";
 	    }
 
 	    ($a, $b) = (0, $sp + $fp);
@@ -509,10 +525,14 @@ sub _compile {
 	    $b  = $sp;
 	    for ($i = 1; $i < $np; $i++) {
 		$a += $sp;
-#		print "a = $a, b = $b\n";
+		debug "_compile: a = $a, b = $b\n";
 		push(@{$Pl[$l][$mxm]}, [$a, $b]);
 	    }
+	} else {
+	    $mp = int($mxm / $np);
 	}
+
+	debug "_compile: mp = $mp\n";
 
 	my $pi = $I ? int($mp / $I + 0.9) : 0;
 	my $pd = $D ? int($mp / $D + 0.9) : 0;
@@ -545,7 +565,7 @@ sub _compile {
 
 	$pp = $$pp[0];			# The partition string itself.
 
-#	print STDERR "$pp $i $d $s\n";
+	debug "_compile: pp = '$pp', i = $i, d = $d, s = $s\n";
 
 	$p{$pp} = length($pp);
 
@@ -674,13 +694,18 @@ sub _mids {
 
 sub amatch {
     my ($pattern, @list) = @_;
+    debug "_amatch: ", join(', ', "'$pattern'",
+			    map { ref $_ ?
+				      "[@{[join(', ', @$_)]}]" :
+				      "'$_'" }
+			        @list), "\n";
     my ($aI, $aD, $aS, $rI, $rD, $rS);
 
     my $len = length($pattern);
 
     my $remods;
 
-    if ($compat1 or ref $list[0]) {
+    if (ref $list[0] or $compat1) {
 	my $mods;
 
 	if ($compat1) {
@@ -707,40 +732,40 @@ sub amatch {
     my @mpat = @{$P{$pattern}[$aI][$aD][$aS]};
     my $mpat;
 
-    # match against the @list
-
     if (@mpat == 1) {
 
-	# the simple non-partitioned match
+	debug "amatch: simple match\n";
 
 	$mpat = $mpat[0];
 
 	$mpat = '(?' . $remods . ')' . $mpat if defined $remods;
 
-#	print STDERR "mpat = $mpat\n";
+	debug "mpat = $mpat\n";
 
 	if (@list) {
 
 	    # match against the @list
 
 	    my @m = eval { grep /$mpat/, @list };
+	    debug "amatch: m = @m\n";
 	    die "amatch: too long pattern.\n"
 		if ($@ =~ /regexp too big/);
 	    return @m;
 	}
 
-	# match against the $_
+	debug "amatch: matching against the \$_\n";
 
 	my $m;
 
 	eval { $m = /$mpat/ };
+	debug "amatch: m = $m\n";
 	die "amatch: too long pattern.\n"
 	    if ($@ =~ /regexp too big/);
 	return ($_) if $m;
 
     } else {
 
-	# the partitioned match
+	debug "amatch: partitioned match\n";
 
 	if (@list) {
 
@@ -751,21 +776,29 @@ sub amatch {
 	    my ($i, $bad);
 
 	    for $mpat (@mpat) {
+		debug "amatch: mpat = $mpat\n";
 		if (@pos) {
-		    for $i (@list) {
-			pos($i) = shift(@pos);
+		    my $s;
+		    for $s (@list) {
+			pos($s) = shift(@pos);
+			debug "amatch: before: pos($s) = ", pos($s), ", ",
+			      substr($s, 0, pos($s)), "\n";
 		    }
 		} else {
 		    @pos = ();
 		}
 		for ($i = $bad = 0; $i < @list; $i++) {
+		    debug "amatch: list[$i] = $list[$i]\n";
 		    unless ($bad[$i]) {
 			if (eval { $list[$i] =~ /$mpat/g }) {
 			    die "amatch: too long pattern.\n"
 				if ($@ =~ /regexp too big/);
 			    $pos[$i] = pos($list[$i]);
+			    debug "amatch: after: pos[$i] = $pos[$i], ",
+			           substr($list[$i], 0, $pos[$i]), "\n";
 			} else {
 			    $bad[$i] = $bad++;
+			    debug "amatch: bad[$i] = $bad[$i]\n";
 			    return () if $bad == @list;
 			}
 		    }
@@ -775,13 +808,13 @@ sub amatch {
 	    my @got = ();
 
 	    for ($i = 0; $i < @list; $i++) {
-		push(@got) unless $bad[$i];
+		push(@got, $list[$i]) unless defined $bad[$i];
 	    }
 
 	    return @got;
 	}
 	
-	# match against the $_
+	debug "amatch: matching against the \$_\n";
 
 	while ($mpat = shift(@mpat)) {
 	    return () unless eval { /$mpat/g };
