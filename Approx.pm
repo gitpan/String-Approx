@@ -1,7 +1,5 @@
 package String::Approx;
 
-# Time-stamp: <95/11/02 15:14:40 jhi>
-
 require 5;
 
 require Exporter;
@@ -10,7 +8,6 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(amatch asubstitute);
-
 
 my $debug = 0;
 
@@ -24,6 +21,11 @@ String::Approx - approximate matching and substitution
 
 	# amatch() and asubstitute imported to the current namespace,
 	# by default _nothing_ is imported
+
+=head1 DESCRIPTION
+
+C<String::Approx> is a Perl module for matching and substituting
+strings in a fuzzy way - approximately.
 
 =head2 amatch
 
@@ -65,16 +67,39 @@ The default is parameter '10%'. Two noteworthy points:
 You can combine all the number parameter types into a single string,
 e.g. '15%i2'.
 
+An example:
+
+	use String::Approx qw(amatch);
+
+	open(WORDS, '/usr/dict/words') or die;
+
+	while (<WORDS>) {
+	  print if amatch('perl');
+	}
+
 =head2 asubstitute
 
 	asubstitute($approximate_string, $substitute[, ...]);
 
-Otherwise identical parameters with amatch() except for the
-substitution string, $substitute.
+Otherwise identical parameters with amatch() except that the
+second argument is the substitution string, $substitute.
+
+One can use in the substitution string the special marker C<$&> that
+represents the approximately matched string.
+
+An example:
+
+	use String::Approx qw(asubstitute);
+
+	open(WORDS, '/usr/dict/words') or die;
+
+	while (<WORDS>) {
+	  print if asubstitute('perl', '<$&>);
+	}
 
 =head1 RETURN VALUES
 
-In scalar context amatch() and asubstitute return the number of
+In scalar context amatch() and asubstitute() return the number of
 possible matches and substitutions. In list context they return the
 list all the possible matches and substitutions. Note that in the case
 of asubstitute() the list of possible substitutions may be longer than
@@ -88,7 +113,7 @@ matches are found.
 Note that error messages and warnings come from amatch(), not from
 asubstitute().
 
-=head1 EXAMPLES
+=head2 More Examples
 
 	amatch($s);		# the maximum amount of approximateness
 				# is max(1,10_%_of_length($s))
@@ -113,35 +138,38 @@ asubstitute().
 
 =head1 LIMITATIONS
 
-You cannot mix approximate matching and normal Perl regular
-expressions (see perlre).  Please do not even think about it.  Do
-B<not> use characters C<.?*+{}[](|)^$\> (that is, any characters that
-have special meaning in regular expressions) in your approximate
+B<You cannot mix approximate matching and normal Perl regular
+expressions (see perlre).  Please do not even think about it>.
+
+Do B<not> use characters C<.?*+{}[](|)^$\> (that is, any characters
+that have special meaning in regular expressions) in your approximate
 strings.
 
 Matching and substitution are always done on $_. The =~ binding
 operator (see perlop) can only be used with the Perl builtins m//,
 s///, and tr///, not for user-defined functions such as amatch().
 
-C<agrep> B<is> faster. Searching for C<'perl'> with one each [IDS]
-allowed from a wordlist of 25486 words took with C<amatch()> 656 seconds
-on a RISC box while C<agrep> took 0.77 seconds. This is because String::Approx
-does the same things with an interpreted language, Perl, whereas agrep
-does it in compiled, language, C, and because doing approximate
-matching is very demanding operation, especially the substitutions.
-String::Approx does it by (ab)using regular expressions which is
-quite wasteful, approximate should be built in for it to be effective.
-The time taken by I is about 30%, by D about 20%, and by S about 50%.
-(In case you are wondering, yes, agrep and amatch() did agree on the
-list of matching words)
+The C<agrep> B<is> faster. Searching for C<'perl'> with one each [IDS]
+allowed from a wordlist of 25486 words took with C<amatch()> 656
+seconds on a RISC box while C<agrep> took 0.77 seconds. This is mainly
+because C<String::Approx> does the same things with an interpreted
+language, Perl, whereas agrep does it in compiled, language, C, and
+because doing approximate matching is very demanding operation,
+especially the substitutions.  C<String::Approx> does it by (ab)using
+regular expressions which is quite wasteful, approximate matching
+should be built in Perl for it to be fast.  The time taken by the
+insertion operation, I<I>, is about 30%, by the deletion, I<D>, about
+20%, and by the substitution, I<S>, about 50%.  (In case you are
+wondering, yes, agrep and amatch() did agree on the list of matching
+words)
 
 =head1 VERSION
 
-v1.5, $Id: Approx.pm,v 1.8 1995/11/02 13:15:29 jhi Exp $
+v1.6
 
 =head1 AUTHOR
 
-Jarkko Hietaniemi, C<Jarkko.Hietaniemi@hut.fi>
+Jarkko Hietaniemi, C<jhi@iki.fi>
 
 =cut
 
@@ -302,9 +330,9 @@ sub _match {
 
       no strict; # $a and $b of sort() confuse strict var
       @m = sort {
-	$cmp = $$a[1] <=> $$b[1]; # primary key start positions
+	$cmp = $$a[1] <=> $$b[1]; # primary key: start positions
 	return $cmp if ($cmp);
-	length($$b[0]) <=> length($$a[0]) # secondary key longer first
+	length($$b[0]) <=> length($$a[0]) # secondary key: longer first
 	} @m;
       use strict;
     }
@@ -333,7 +361,7 @@ sub asubstitute {
       $es = eval $es;
       $es =~ s/\$&/$$i[0]/eg;
     }
-    substr($_, $$i[1] + $od, length($$i[0])) = $es;
+    substr($_, $$i[1] - length($s) + 1 + $od, length($$i[0])) = $es;
     $vi = $$i[1] + length($$i[0]) + $od;
     while (@s and $s[0][1] + $od < $vi) { shift(@s) }
     $od += length($es) - length($$i[0]);
