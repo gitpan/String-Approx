@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.14;
+$VERSION = 3.15;
 
 use strict;
 local $^W = 1;
@@ -18,32 +18,76 @@ require DynaLoader;
 
 bootstrap String::Approx $VERSION;
 
-my $CACHE_MAX	= 1000;		# high water mark
-my $CACHE_PURGE	= 0.75;		# purge this much of the least used
-my $CACHE_N_PURGE = $CACHE_MAX * $CACHE_PURGE;
+my $CACHE_MAX = 1000;	# high water mark
+my $CACHE_PURGE = 0.75;	# purge this much of the least used
+my $CACHE_N_PURGE;	# purge this many of the least used
+
+sub cache_n_purge () {
+    $CACHE_N_PURGE = $CACHE_MAX * $CACHE_PURGE;
+    $CACHE_N_PURGE = 1 if $CACHE_N_PURGE < 1;
+    return $CACHE_N_PURGE;
+}
+
+cache_n_purge();
+
+sub cache_max (;$) {
+    if (@_ == 0) {
+	return $CACHE_MAX;
+    } else {
+	$CACHE_MAX = shift;
+    }
+    $CACHE_MAX = 0 if $CACHE_MAX < 0;
+    cache_n_purge();
+}
+
+sub cache_purge (;$) {
+    if (@_ == 0) {
+	return $CACHE_PURGE;
+    } else {
+	$CACHE_PURGE = shift;
+    }
+    if ($CACHE_PURGE < 0) {
+	$CACHE_PURGE = 0;
+    } elsif ($CACHE_PURGE > 1) {
+	$CACHE_PURGE = 1;
+    }
+    cache_n_purge();
+}
 
 my %_simple;
 my %_simple_usage_count;
 
+sub _cache_flush_simple {
+    my $P = shift;
+
+    my @usage =
+	sort { $_simple_usage_count{$a} <=> $_simple_usage_count{$b} }
+             grep { $_ ne $P }
+                  keys %_simple_usage_count;
+	    
+    # Make room, delete the least used entries.
+    $#usage = $CACHE_N_PURGE - 1;
+	    
+    delete @_simple_usage_count{@usage};
+    delete @_simple{@usage};
+}
+
 sub _simple {
     my $P = shift;
 
-    $_simple{$P} = new(__PACKAGE__, $P) unless exists $_simple{$P};
+    my $_simple = new(__PACKAGE__, $P);
 
-    $_simple_usage_count{$P}++;
+    if ($CACHE_MAX) {
+	$_simple{$P} = $_simple unless exists $_simple{$P};
 
-    if (scalar keys %_simple_usage_count > $CACHE_MAX) {
-	my @usage =
-                sort { $_simple_usage_count{$a} <=> $_simple_usage_count{$b} }
-	             keys %_simple_usage_count;
+	$_simple_usage_count{$P}++;
 
-	foreach my $i (0..$CACHE_N_PURGE) {
-	    delete $_simple_usage_count{$usage[$i]}
-	        unless $usage[$i] ne $P;
+	if (keys %_simple_usage_count > $CACHE_MAX) {
+	    _cache_flush_simple($P);
 	}
     }
 
-    return ( $_simple{$P} );
+    return ( $_simple );
 }
 
 sub _parse_param {
@@ -92,12 +136,30 @@ my %_parsed_param;
 my %_complex;
 my %_complex_usage_count;
 
+sub _flush_cache_complex {
+    my $P = shift;
+
+    my @usage =
+	sort { $_complex_usage_count{$a} <=>
+		   $_complex_usage_count{$b} }
+             grep { $_ ne $P }
+                  keys %_complex_usage_count;
+	    
+    # Make room, delete the least used entries.
+    $#usage = $CACHE_N_PURGE - 1;
+	    
+    delete @_complex_usage_count{@usage};
+    delete @_complex{@usage};
+}
+
 sub _complex {
     my ($P, @param) = @_;
     unshift @param, length $P;
     my $param = "@param";
     my $_param_key;
     my %param;
+    my $complex;
+    my $is_new;
 
     unless (exists $_param_key{$param}) {
 	%param = _parse_param(@param);
@@ -109,59 +171,70 @@ sub _complex {
 
     $_param_key = $_param_key{$param};
 
-    unless (exists $_complex{$P}->{$_param_key}) {
-	$_complex{$P}->{$_param_key} = new(__PACKAGE__, $P)
-	    unless exists $_complex{$P}->{$_param_key};
-
-	$_complex{$P}->{$_param_key}->set_greedy unless exists $param{'?'};
-
-	if (exists $param{'k'}) {
-	    $_complex{$P}->{$_param_key} = new(__PACKAGE__, $P, $param{k});
-	} else {
-	    $_complex{$P}->{$_param_key} = new(__PACKAGE__, $P);
+    if ($CACHE_MAX) {
+	if (exists $_complex{$P}->{$_param_key}) {
+	    $complex = $_complex{$P}->{$_param_key};
 	}
+    }
 
-	$_complex{$P}->{$_param_key}->set_insertions($param{'I'})
+    unless (defined $complex) {
+	if (exists $param{'k'}) {
+	    $complex = new(__PACKAGE__, $P, $param{k});
+	} else {
+	    $complex = new(__PACKAGE__, $P);
+	}
+	$_complex{$P}->{$_param_key} = $complex if $CACHE_MAX;
+	$is_new = 1;
+    }
+
+    if ($is_new) {
+	$complex->set_greedy unless exists $param{'?'};
+
+	$complex->set_insertions($param{'I'})
 	    if exists $param{'I'};
-	$_complex{$P}->{$_param_key}->set_deletions($param{'D'})
+	$complex->set_deletions($param{'D'})
 	    if exists $param{'D'};
-	$_complex{$P}->{$_param_key}->set_substitutions($param{'S'})
+	$complex->set_substitutions($param{'S'})
 	    if exists $param{'S'};
 	
-	$_complex{$P}->{$_param_key}->set_caseignore_slice
+	$complex->set_caseignore_slice
 	    if exists $param{'i'};
 
-	$_complex{$P}->{$_param_key}->
-	  set_text_initial_position($param{'initial_position'})
+	$complex->set_text_initial_position($param{'initial_position'})
 	    if exists $param{'initial_position'};
 
-	$_complex{$P}->{$_param_key}->
-	  set_text_final_position($param{'final_position'})
+	$complex->set_text_final_position($param{'final_position'})
 	    if exists $param{'final_position'};
 
-	$_complex{$P}->{$_param_key}->
-	  set_text_position_range($param{'position_range'})
+	$complex->set_text_position_range($param{'position_range'})
 	    if exists $param{'position_range'};
 
-	$_complex{$P}->{$_param_key}->set_minimal_distance()
+	$complex->set_minimal_distance($param{'minimal_distance'})
 	    if exists $param{'minimal_distance'};
     }
 
-    $_complex_usage_count{$P}->{$_param_key}++;
+    if ($CACHE_MAX) {
+	$_complex_usage_count{$P}->{$_param_key}++;
 
-    # If our cache overfloweth.
-    if (scalar keys %_complex_usage_count > $CACHE_MAX) {
-	my @usage =
-                sort { $_complex_usage_count{$a} <=>
-                       $_complex_usage_count{$b} }
-	             keys %_complex_usage_count;
-	# Make room, delete the least used entries.
-	foreach my $i (0..$CACHE_N_PURGE) {
-	    delete $_complex_usage_count{$usage[$i]};
+	# If our cache overfloweth.
+	if (scalar keys %_complex_usage_count > $CACHE_MAX) {
+	    _cache_flush_simple($P);
 	}
     }
 
-    return ( $_complex{$P}->{$_param_key}, %param );
+    return ( $complex, %param );
+}
+
+sub cache_disable {
+    cache_max(0);
+}
+
+sub cache_flush_all {
+    my $old_purge = cache_purge();
+    cache_purge(1);
+    _cache_flush_simple('');
+    _cache_flush_complex('');
+    cache_purge($old_purge);
 }
 
 sub amatch {
@@ -623,6 +696,50 @@ match can 'float' in the inputs, the match is a substring match.)  If
 the pattern is longer than the input or inputs, the returned distance
 or distances is or are negative.
 
+=head1 CONTROLLING THE CACHE
+
+C<String::Approx> maintains a LU (least-used) cache that holds the
+'matching engines' for each instance of a I<pattern+modifiers>.  The
+cache is intended to help the case where you match a small set of
+patterns against a large set of string.  However, the more engines you
+cache the more you eat memory.  If you have a lot of different
+patterns or if you have a lot of memory to burn, you may want to
+control the cache yourself.  For example, allowing a larger cache
+consumes more memory but probably runs a little bit faster since the
+cache fills (and needs flushing) less often.
+
+The cache has two parameters: I<max> and I<purge>.  The first one
+is the maximum size of the cache and the second one is the cache
+flushing ratio: when the number of cache entries exceeds I<max>,
+I<max> times I<purge> cache entries are flushed.  The default
+values are 1000 and 0.75, respectively, which means that when
+the 1001st entry would be cached, 750 least used entries will
+be removed from the cache.  To access the parameters you can
+use the calls
+
+	$now_max = String::Approx::cache_max();
+	String::Approx::cache_max($new_max);
+
+	$now_purge = String::Approx::cache_purge();
+	String::Approx::cache_purge($new_purge);
+
+	$limit = String::Approx::cache_n_purge();
+
+To be honest, there are actually B<two> caches: the first one is used
+far the patterns with no modifiers, the second one for the patterns
+with pattern modifiers.  Using the standard parameters you will
+therefore actually cache up to 2000 entries.  The above calls control
+both caches for the same price.
+
+To disable caching completely use
+
+	String::Approx::cache_disable();
+
+Note that this doesn't flush any possibly existing cache entries,
+to do that use
+
+	String::Approx::cache_flush_all();
+
 =head1 NOTES
 
 Because matching is by I<substrings>, not by whole strings, insertions
@@ -718,13 +835,18 @@ there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 
 =head1 ACKNOWLEDGEMENTS
 
-The following people have provided with valuable test cases and other
-feedback: Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij
-Frishman, Lars Gregersen, Kevin Greiner, Mike Hanafey, Ricky Houghton,
-Helmut Jarausch, Ben Kennedy, Mark Land, Sergey Novoselov, Andy Oram,
-Eric Promislow, Stefan Ram, Stewart Russell, Slaven Rezic, Chris
-Rosin, Ilya Sandler, Bob J.A. Schijvenaars, Ross Smith, Greg Ward,
-Rick Wise.
+The following people have provided valuable test cases, documentation
+clarifications, and other feedback:
+
+Jared August, Anirvan Chatterjee, Steve A. Chervitz, Aldo Calpini,
+David Curiel, Teun van den Dool, Alberto Fontaneda, Rob Fugina,
+Dmitrij Frishman, Lars Gregersen, Kevin Greiner, B. Elijah Griffin,
+Mike Hanafey, Mitch Helle, Ricky Houghton, Helmut Jarausch,
+Damian Keefe, Ben Kennedy, Craig Kelley, Franz Kirsch, Dag Kristian,
+Mark Land, J. D. Laub, Sergey Novoselov, Andy Oram, Eric Promislow,
+Nikolaus Rath, Stefan Ram, Dag Kristian Rognlien, Stewart Russell,
+Slaven Rezic, Chris Rosin, Ilya Sandler, Bob J.A. Schijvenaars,
+Ross Smith, Frank Tobin, Greg Ward, Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.

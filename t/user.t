@@ -1,7 +1,7 @@
 # User-supplied test cases.
 # (These *were* bugs :-)
 
-use String::Approx qw(amatch aindex);
+use String::Approx qw(amatch aindex adist);
 
 chdir('t') or die "could not chdir to 't'";
 
@@ -9,7 +9,7 @@ require 'util';
 
 local $^W = 1;
 
-print "1..34\n";
+print "1..37\n";
 
 # test 1: test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
@@ -280,5 +280,20 @@ print "not " unless aindex( "knral", "nbankfirknalt" ) == 8;
 print "ok 33\n";
 print "not " unless aindex( "knral", "nkfirknalt" ) == 5;
 print "ok 34\n";
+
+# test 35: Chris Rosin <crosin@cparity.com>
+
+print "not " unless adist('MOM','XXMOXXMOXX') == 1;
+print "ok 35\n";
+
+# test 36: Frank Tobin <ftobin@uiuc.edu>
+
+print "not " unless aindex('----foobar----',[1],'----aoobar----') == 0;
+print "ok 36\n";
+
+# test 37: Damian Keefe <damian.keefe@incyte.com>
+
+print "not " unless aindex('tccaacttctctgtgactgaccaaagaa','tctttgcatccaatactccaacttctctgtggctgaccaaagaattggcacctatcttgccagtcaggtagttctgatgggtccagcacagactggctgcctgggggagaaagacagcattgatttgaagtggtgaacactataactcccctagctcatcacaaaacaagcagacaagaaccacagcttc') == 16;
+print "ok 37\n";
 
 # eof

@@ -26,7 +26,7 @@ new(CLASS, pattern, ...)
     CODE:
         apse_t*         ap;
         apse_size_t     edit_distance;
-        IV pattern_size = SvCUR(pattern);
+        IV pattern_size = sv_len(pattern);
         if (items == 2)
                 edit_distance = ((pattern_size-1)/10)+1;
         else if (items == 3)
@@ -59,7 +59,7 @@ match(ap, text)
     CODE:
         RETVAL = apse_match(ap,
                             (unsigned char *)SvPV(text, PL_na),
-                            SvCUR(text));
+                            sv_len(text));
     OUTPUT:
         RETVAL
 
@@ -70,7 +70,7 @@ match_next(ap, text)
     CODE:
         RETVAL = apse_match_next(ap,
                                  (unsigned char *)SvPV(text, PL_na),
-                                 SvCUR(text));
+                                 sv_len(text));
     OUTPUT:
         RETVAL
 
@@ -81,7 +81,7 @@ index(ap, text)
     CODE:
         RETVAL = apse_index(ap,
                             (unsigned char *)SvPV(text, PL_na),
-                            SvCUR(text));
+                            sv_len(text));
     OUTPUT:
         RETVAL
 
@@ -96,7 +96,7 @@ slice(ap, text)
 	if (ap->use_minimal_distance) {
 	  apse_slice(ap,
 		     (unsigned char *)SvPV(text, PL_na),
-		     (apse_size_t)SvCUR(text),
+		     (apse_size_t)sv_len(text),
 		     &match_begin,
 		     &match_size);
 	  EXTEND(sp, 3);
@@ -105,7 +105,7 @@ slice(ap, text)
 	  PUSHs(sv_2mortal(newSViv(ap->edit_distance)));
 	} else if (apse_slice(ap,
 			      (unsigned char *)SvPV(text, PL_na),
-			      (apse_size_t)SvCUR(text),
+			      (apse_size_t)sv_len(text),
 			      &match_begin,
 			      &match_size)) {
 	  EXTEND(sp, 2);
@@ -123,7 +123,7 @@ slice_next(ap, text)
     PPCODE:
         if (apse_slice_next(ap,
                             (unsigned char *)SvPV(text, PL_na),
-                            SvCUR(text),
+                            sv_len(text),
                             &match_begin,
                             &match_size)) {
                 EXTEND(sp, 2);
@@ -227,7 +227,8 @@ set_text_position_range(ap, text_position_range)
         RETVAL
 
 void
-set_minimal_distance(ap)
+set_minimal_distance(ap, b)
         apse_t*         ap
+	apse_bool_t	b
     CODE:
-        apse_set_minimal_distance(ap, 1);
+        apse_set_minimal_distance(ap, b);

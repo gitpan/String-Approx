@@ -34,15 +34,15 @@ open(WORDS, 'words') or die "could not find 'words'";
 
 t(
   [qw(
-      ap(peal)
+      a(ppeal)
       dis(pel)
       (erl)angen
-      hy(per)bola
+      hy(perb)ola
       m(erl)in
       (parl)ance
-      (per)k
-      su(per)appeal
-      su(per)lative
+      (perk)
+      su(pera)ppeal
+      su(perl)ative
    )],
   [asubstitute('perl', '($&)', ['I0'], <WORDS>)]);
 print "ok 2\n";
@@ -62,7 +62,7 @@ t(
       (pearl)
       (perk)
       su(pera)ppeal
-      su(perl)ative
+      su(perla)tive
    )],
   [asubstitute('perl', '($&)', ['D0'], <WORDS>)]);
 print "ok 3\n";
@@ -82,7 +82,7 @@ t(
       (pearl)
       (per)k
       su(per)appeal
-      su(per)lative
+      su(perla)tive
    )],
   [asubstitute('perl', '($&)', ['S0'], <WORDS>)]);
 print "ok 4\n";
@@ -95,28 +95,28 @@ open(WORDS, 'words') or die;
 
 t(
   [qw(
-      ab(er)rant
+      ab(err)ant
       acc(el)erate
-      ap(pe)al
-      dis(pe)l
-      (er)langen
+      a(ppeal)
+      dis(pel)
+      (erla)ngen
       f(el)icity
-      gibb(er)ish
-      hy(pe)rbola
-      it(er)ate
-      l(eger)demain
-      m(er)lin
-      m(er)maid
+      gibb(eri)sh
+      hy(perbol)a
+      it(era)te
+      l(egerd)emain
+      m(erli)n
+      m(erm)aid
       oatm(eal)
-      (par)k
-      (par)lance
-      Pea(rl)
-      (pe)arl
-      (pe)rk
-      (pe)tal
-      su(pe)rappeal
-      su(pe)rlative
-      sup(pl)e
+      (park)
+      (parla)nce
+      P(earl)
+      (pearl)
+      (perk)
+      (petal)
+      su(perap)peal
+      su(perlat)ive
+      su(ppl)e
       twi(rl)
       z(eal)ous
      )],
@@ -131,17 +131,17 @@ open(WORDS, 'words') or die;
 
 t(
   [qw(
-      ap(peal)
+      a(ppeal)
       dis(pel)
       (erl)angen
-      hy(per)bola
+      hy(perb)ola
       m(erl)in
       (parl)ance
       (Pearl)
       (pearl)
-      (per)k
-      su(per)appeal
-      su(per)lative
+      (perk)
+      su(pera)ppeal
+      su(perla)tive
     )],
   [asubstitute('perl', '($&)', ['i'], <WORDS>)]);
 print "ok 6\n";
@@ -154,17 +154,17 @@ open(WORDS, 'words') or die;
 
 t(
   [qw(
-      ap(peal)
+      a(ppeal)
       dis(pel)
       (erl)angen
-      hy(per)bola
+      hy(perb)ola
       m(erl)in
       (parl)ance
       (Pearl)
       (pearl)
-      (per)k
-      su(per)ap(peal)
-      su(per)lative
+      (perk)
+      su(pera)p(peal)
+      su(perla)tive
      )],
   [asubstitute('perl', '($&)', ['ig'], <WORDS>)]);
 print "ok 7\n";
@@ -207,28 +207,28 @@ open(WORDS, 'words') or die;
 
 t(
   [qw(
-      ab(ab:er:rant)rant
+      ab(ab:err:ant)ant
       acc(acc:el:erate)erate
-      ap(ap:pe:al)al
-      dis(dis:pe:l)l
-      (:er:langen)langen
+      a(a:ppeal:)
+      dis(dis:pel:)
+      (:erla:ngen)ngen
       f(f:el:icity)icity
-      gibb(gibb:er:ish)ish
-      hy(hy:pe:rbola)rbola
-      it(it:er:ate)ate
-      l(l:eger:demain)demain
-      m(m:er:lin)lin
-      m(m:er:maid)maid
+      gibb(gibb:eri:sh)sh
+      hy(hy:perbol:a)a
+      it(it:era:te)te
+      l(l:egerd:emain)emain
+      m(m:erli:n)n
+      m(m:erm:aid)aid
       oatm(oatm:eal:)
-      (:par:k)k
-      (:par:lance)lance
-      Pea(Pea:rl:)
-      (:pe:arl)arl
-      (:pe:rk)rk
-      (:pe:tal)tal
-      su(su:pe:rappeal)rappeal
-      su(su:pe:rlative)rlative
-      sup(sup:pl:e)e
+      (:park:)
+      (:parla:nce)nce
+      P(P:earl:)
+      (:pearl:)
+      (:perk:)
+      (:petal:)
+      su(su:perap:peal)peal
+      su(su:perlat:ive)ive
+      su(su:ppl:e)e
       twi(twi:rl:)
       z(z:eal:ous)ous
    )],

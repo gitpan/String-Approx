@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) Jarkko Hietaniemi, 1998,1999,2000. All Rights Reserved.
+Copyright (C) Jarkko Hietaniemi, 1998,1999,2000,2001. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of either:
@@ -33,7 +33,7 @@ Furthermore:
 #define APSE_H
 
 #define APSE_MAJOR_VERSION	0
-#define APSE_MINOR_VERSION	14
+#define APSE_MINOR_VERSION	15
 
 #include <sys/types.h>
 

@@ -4,6 +4,7 @@ sub t {
 
     my $not = 0;
 
+    foreach (@$a) { chomp }
     foreach (@$b) { chomp }
 
     my @oa = @$a;
@@ -18,6 +19,8 @@ sub t {
 	        $wa =~ s/\s+$//;
 	        $wb =~ s/^\s+//;
 	        $wb =~ s/\s+$//;
+	        $wa =~ s/\n//g;
+	        $wb =~ s/\n//g;
 	    }
 	    if (not $db or $wa ne $wb) {
 		print STDERR "# ne: $wa $wb\n";

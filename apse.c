@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) Jarkko Hietaniemi, 1998,1999,2000. All Rights Reserved.
+Copyright (C) Jarkko Hietaniemi, 1998,1999,2000,2001. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of either:
@@ -467,6 +467,17 @@ apse_bool_t apse_set_edit_distance(apse_t *ap, apse_size_t edit_distance) {
     ap->match_end_bitvector =
 	(ap->pattern_size - 1) / APSE_BITS_IN_BITVEC;
 
+#ifdef APSE_DEBUGGING
+    if (ap->has_different_distances) {
+	printf("(edit distances: ");
+	printf("insertions = %ld, deletions = %ld, substitutions = %ld)\n",
+	       ap->edit_insertions,
+	       ap->edit_deletions,
+	       ap->edit_substitutions);
+    } else
+	printf("(edit_distance = %ld)\n", ap->edit_distance);
+#endif
+
 out:
     return ap->state && ap->prev_state;
 }
@@ -697,14 +708,7 @@ apse_t *apse_create(unsigned char*	pattern,
 	printf("(single bitvector");
     else
 	printf("(multiple bitvectors");
-    if (ap->has_different_distances) {
-	printf(")\n(edit distances: ");
-	printf("insertions = %ld, deletions = %ld, substitutions = %ld)\n",
-	       ap->edit_insertions,
-	       ap->edit_deletions,
-	       ap->edit_substitutions);
-    } else
-	printf(", edit_distance = %ld)\n", ap->edit_distance);
+    printf(")\n");
 #endif
     okay = 1;
 
@@ -892,8 +896,16 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 		    active++;
 	    }
 	    if (equal == ap->edit_distance + 1 && ap->is_greedy == 0 ||
-		equal == 0 && ap->prev_active && active > ap->prev_active)
+		equal == 0 && ap->prev_active && active > ap->prev_active &&
+		!APSE_BIT_TST(ap->state,
+			      ap->edit_distance,
+			      ap->bitvectors_in_state,
+			      ap->text_position - ap->match_begin)) {
 		ap->match_begin = ap->text_position;
+#ifdef APSE_DEBUGGING
+		printf("(slide begin %d)\n", ap->match_begin);
+#endif
+	    }
 	    else if (active == 0)
 		_apse_match_fail(ap);
 	    ap->prev_active = active;
@@ -926,7 +938,7 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 	ap->match_state = APSE_MATCH_STATE_END;
 	APSE_DEBUG(printf("(match state %s)\n", apse_match_state_name(ap)));
 	ap->match_end	= ap->text_position - 1;
-	APSE_DEBUG(printf("(match end %ld)\n", ap->match_end));
+	APSE_DEBUG(printf("(match end %ld)\n",  ap->match_end));
     }
 
     return ap->match_state;
@@ -1314,8 +1326,8 @@ static apse_bool_t _apse_match(apse_t 		*ap,
 		    break;
 		previous_edit_distance = next_edit_distance;
 	    } 
-	    minimal_edit_distance = 0;
-	    if (next_edit_distance) {
+	    minimal_edit_distance = next_edit_distance;
+	    if (next_edit_distance > 1) {
 		do {
 		    minimal_edit_distance =
 			(previous_edit_distance + next_edit_distance) / 2;
@@ -1362,7 +1374,6 @@ apse_bool_t apse_match_next(apse_t *ap,
 apse_ssize_t apse_index(apse_t *ap,
 			 unsigned char *text, apse_size_t text_size) {
     apse_size_t did_match = _apse_match(ap, text, text_size);
-
     _apse_match_eot(ap);
     ap->match_state = APSE_MATCH_STATE_BOT;
 
