@@ -89,6 +89,7 @@ typedef struct apse_s {
 
     apse_vec_t*		state;
     apse_vec_t*		prev_state;
+    apse_size_t		prev_active;
     apse_size_t		match_begin_bitvector;
     apse_vec_t		match_begin_bitmask;
     apse_vec_t		match_begin_prefix;

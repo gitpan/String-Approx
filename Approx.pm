@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = "3.12";
+$VERSION = "3.13";
 
 use strict;
 local $^W = 1;
@@ -37,7 +37,8 @@ sub _simple {
 	             keys %_simple_usage_count;
 
 	foreach my $i (0..$CACHE_N_PURGE) {
-	    delete $_simple_usage_count{$usage[$i]};
+	    delete $_simple_usage_count{$usage[$i]}
+	        unless $usage[$i] ne $P;
 	}
     }
 
@@ -236,7 +237,6 @@ sub asubstitute {
 
     my ($i, $s, @i, @s, @n, @S);
 
-
     if (@_) {
 	if (exists $p{ g }) {
 	    foreach (@_) {
@@ -338,7 +338,7 @@ With this you can emulate errors: typing errorrs, speling errors,
 closely related vocabularies (colour color), genetic mutations (GAG
 ACT), abbreviations (McScot, MacScot).
 
-The measure of B<approximity> is the I<Levenshtein edit distance>.
+The measure of B<approximateness> is the I<Levenshtein edit distance>.
 It is the total number of "edits": insertions,
 
 	word world
@@ -357,9 +357,6 @@ transform I<"lead"> into I<"gold">, you need three edits:
 	lead gead goad gold
 
 The edit distance of "lead" and "gold" is therefore three.
-
-(NOTE: B<approximity> is a coinage, courtesy of Andy Oram; you won't
- find it in a dictionary, but it sounds better than "approximateness")
 
 =head1 MATCH
 
@@ -389,16 +386,16 @@ element is always a superstring of the pattern.
 
 =head2 MODIFIERS
 
-With the modifiers you can control the amount of approximity and
+With the modifiers you can control the amount of approximateness and
 certain other control variables.  The modifiers are one or more
 strings, for example C<"i">, within a string optionally separated by
 whitespace.  The modifiers are inside an anonymous array: the C<[ ]>
 in the syntax are not notational, they really do mean C<[ ]>, for
 example C<[ "i", "2" ]>.  C<["2 i"]> would be identical.
 
-The implicit default approximity is 10%, rounded up.  In other
+The implicit default approximateness is 10%, rounded up.  In other
 words: every tenth character in the pattern may be an error, an edit.
-You can explicitly set the maximum approximity by supplying a
+You can explicitly set the maximum approximateness by supplying a
 modifier like
 
 	number
@@ -446,8 +443,8 @@ the modifiers
 	asubstitute("pattern", "replacement", [ modifiers ])
 	asubstitute("pattern", "replacement", [ modifiers ], @inputs)
 
-Substitute approximate B<pattern> with B<replacement> and return
-I<copies> of B<@inputs>, the substitutions having been made on the
+Substitute approximate B<pattern> with B<replacement> and return as a
+list <copies> of B<@inputs>, the substitutions having been made on the
 elements that did match the pattern.  If no inputs are given,
 substitute in the B<$_>.  The replacement can contain magic strings
 B<$&>, B<$`>, B<$'> that stand for the matched string, the string
@@ -543,7 +540,7 @@ If you want to simulate transposes
 	feet fete
 
 you need to allow at least edit distance of two because in terms of
-our edit primitives a transpose is one first deletion and then one
+our edit primitives a transpose is first one deletion and then one
 insertion.
 
 There's no backwards-scanning 'arindex'.
@@ -588,7 +585,7 @@ change stemming from switching the matching algorithm.  Example: with
 edit distance of two and substituting for C<"word"> from C<"cork"> and
 C<"wool"> previously did match C<"cork"> and C<"wool">.  Now it does
 match C<"or"> and C<"wo">.  As little as possible, or, in other words,
-with as much approximity, as many edits, as possible.  Because
+with as much approximateness, as many edits, as possible.  Because
 there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 
 =item no more C<aregex()> because regular expressions are no more used
@@ -602,9 +599,9 @@ there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 The following people have provided with valuable test cases and other
 feedback: Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij
 Frishman, Lars Gregersen, Kevin Greiner, Mike Hanafey, Ricky Houghton,
-Helmut Jarausch, Mark Land, Sergey Novoselov, Andy Oram, Stewart
-Russell, Slaven Rezic, Chris Rosin, Ilya Sandler, Bob
-J.A. Schijvenaars, Greg Ward, Rick Wise.
+Helmut Jarausch, Ben Kennedy, Mark Land, Sergey Novoselov, Andy Oram,
+Stefan Ram, Stewart Russell, Slaven Rezic, Chris Rosin, Ilya Sandler,
+Bob J.A. Schijvenaars, Greg Ward, Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.

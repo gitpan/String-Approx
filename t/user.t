@@ -1,7 +1,7 @@
 # User-supplied test cases.
 # (These *were* bugs :-)
 
-use String::Approx 'amatch';
+use String::Approx qw(amatch aindex);
 
 chdir('t') or die "could not chdir to 't'";
 
@@ -9,7 +9,7 @@ require 'util';
 
 local $^W = 1;
 
-print "1..29\n";
+print "1..34\n";
 
 # test 1: test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
@@ -259,5 +259,26 @@ print "ok 28\n";
 
 print "not " unless amatch("", "foo");
 print "ok 29\n";
+
+# test 30: Rob Fugina
+
+open(MAKEFILEPL, "../Makefile.PL") or die "$0: failed to open Makefile.PL: $!";
+# Don't let a debugging version escape the laboratory.
+print "not " if grep {/^[^#]*-DAPSE_DEBUGGING/} <MAKEFILEPL>;
+print "ok 30\n";
+close(MAKEFILEPL);
+
+# test 31: David Curiel
+print "not " unless aindex("xyz", "abxefxyz") == 5;
+print "ok 31\n";
+
+# tests 32..34: Stefan Ram <ram@cis.fu-berlin.de>
+
+print "not " unless aindex( "knral", "nisinobikttatnbankfirknalt" ) == 21;
+print "ok 32\n";
+print "not " unless aindex( "knral", "nbankfirknalt" ) == 8;
+print "ok 33\n";
+print "not " unless aindex( "knral", "nkfirknalt" ) == 5;
+print "ok 34\n";
 
 # eof

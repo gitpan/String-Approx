@@ -175,6 +175,8 @@ apse_bool_t apse_set_pattern(apse_t*		ap,
 
     ap->is_greedy    = 0;
 
+    ap->prev_active   = 0;
+
     ap->pattern_size = pattern_size;
     ap->bitvectors_in_state = (pattern_size - 1)/APSE_BITS_IN_BITVEC + 1;
 
@@ -359,6 +361,8 @@ static void _apse_reset_state(apse_t* ap) {
 
     (void)memset(ap->state,      0, ap->bytes_in_all_states);
     (void)memset(ap->prev_state, 0, ap->bytes_in_all_states);
+
+    ap->prev_active = 0;
 
     for (i = 1; i <= ap->edit_distance; i++) {
 	for (j = 0; j < i; j++)
@@ -874,14 +878,15 @@ static apse_bool_t _apse_match_next_state(apse_t *ap) {
 		if (ap->state[j])
 		    active++;
 	    }
-	    if (equal == ap->edit_distance + 1 && ap->is_greedy == 0)
+	    if (equal == ap->edit_distance + 1 && ap->is_greedy == 0 ||
+		equal == 0 && ap->prev_active && active > ap->prev_active)
 		ap->match_begin = ap->text_position;
 	    else if (active == 0)
 		_apse_match_fail(ap);
+	    ap->prev_active = active;
 	}
 	break;
     default:
-	/* FALLTHROUGH */
 	break;
     }
 
@@ -1275,8 +1280,10 @@ static apse_bool_t _apse_match(apse_t 		*ap,
 	apse_size_t minimal_edit_distance;
 	apse_size_t previous_edit_distance;
 	apse_size_t next_edit_distance;
+	apse_size_t text_size_twice_plus_one = 2 * text_size + 1;
 
-	for (next_edit_distance = 0; ;) {
+	for (next_edit_distance = 0; ;
+	     next_edit_distance <= text_size_twice_plus_one) {
 	    apse_set_edit_distance(ap, next_edit_distance);
 	    if (__apse_match(ap, text, text_size))
 		break;

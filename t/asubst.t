@@ -4,8 +4,6 @@ chdir('t') or die "could not chdir to 't'";
 
 require 'util';
 
-# String::Approx::debug(1);
-
 print "1..10\n";
 
 # test 1

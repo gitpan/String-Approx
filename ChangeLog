@@ -1,4 +1,18 @@
-Sun Apr 30 22:39:09 2000  Jarkko Hietaniemi  <jhi@beta.hut.fi>
+Wed Sep  6 19:23:55 2000  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Released as 3.13.
+	
+	* apse.c: fixed an aindex() bug where a better match
+	  doesn't move the match_begin forward.  Reported by
+	  David Curiel and Stefan Ram.
+
+	* Approx.pm: fix a cache flushing bug where the most current
+	  pattern was accidentally flushed, fix from Ben Kennedy.
+	
+	  Revert back to using real words: "approximateness" it is
+	  (drop the "approximity" coinage).
+	
+Sun Apr 30 22:39:09 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Released as 3.12.
 	
@@ -8,7 +22,7 @@ Mon Apr 24 23:19:20 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Makefile.PL: The -DAPSE_DEBUGGING was accidentally left on,
 	  resulting in a deluge of debug messages being spewed to stderr.
-	  Oops.  Reported by Rob Fugina.
+	  Oops.	 Reported by Rob Fugina.
 	
 	* Approx.pm: Bump to 3.11.
 
@@ -20,16 +34,16 @@ Tue Apr 18 06:48:34 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 	  debugging by J. D. Laub (already back in November 1999,
 	  but I'm amazingly good at procrastinating).  This is
 	  probably the bug that plagued String::Approx 3.0*
-	  in HP-UX and Solaris.  I couldn't anymore repeat it
+	  in HP-UX and Solaris.	 I couldn't anymore repeat it
 	  in HP-UX, in Solaris it was still going strong.
 	
 	  The bug was really well camouflaged: it didn't
 	  overstep the buffer area as a whole, in which case it would
-	  have been found by Purify-like tools.  What was happening
+	  have been found by Purify-like tools.	 What was happening
 	  was that the code is maintaining a 2-dimensional bitmask
 	  (or a 3-dimensional bitbuffer, if you will), and under
 	  certain circumstances the bits from one dimension leaked
-	  into another.  The only user-visible API that was
+	  into another.	 The only user-visible API that was
 	  tickling the bug was aslice(), so if you weren't using that,
 	  you were probably okay.  In Solaris (and at some point HP-UX)
 	  the malloced buffers happened to be laid out so that bug
@@ -89,10 +103,10 @@ Wed Jun 16 14:19:39 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 	
 	* t/user.t: Added four new tests from Rosin and Land.
 	
-Fri Jan  8 16:09:52 1999  Jarkko Hietaniemi  <jhi@iki.fi>
+Fri Jan	 8 16:09:52 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Release 3.05.  No functional changes
- 	  or bug fixes (no bugs reported), just a release
+	  or bug fixes (no bugs reported), just a release
 	  that includes both the Artistic License and LGPL.
 
 Wed Dec 30 11:07:28 1998  Jarkko Hietaniemi  <jhi@iki.fi>
@@ -137,7 +151,7 @@ Wed Dec 16 01:23:58 1998  Jarkko Hietaniemi  <jhi@iki.fi>
 	* Approx.pm: Released 3.02.
 
 	* README: Added a clarification about our relationship
-	  with agrep.  There is no common code.  None.
+	  with agrep.  There is no common code.	 None.
 	  Waiting for confirmation from Udi Manber.
 	  (The concern raised by Slaven Rezic).
 	
@@ -147,4 +161,3 @@ Wed Dec 16 01:23:58 1998  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Released 3.01 (actually already Dec 15).
 	
-
