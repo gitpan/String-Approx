@@ -1,3 +1,9 @@
+Sun Apr 30 22:39:09 2000  Jarkko Hietaniemi  <jhi@beta.hut.fi>
+
+	* Released as 3.12.
+	
+	* ChangeLog: Explain the bug fixed in 3.10 a little bit more.
+
 Mon Apr 24 23:19:20 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Makefile.PL: The -DAPSE_DEBUGGING was accidentally left on,
@@ -11,12 +17,24 @@ Tue Apr 18 06:48:34 2000  Jarkko Hietaniemi  <jhi@iki.fi>
 	* Released as 3.10.
 	
 	* apse.c: Fix an insidious buffer overrun, found by heroic
-	debugging of J. D. Laub (already back in November 1999,
-	but I'm amazingly good at procrastinating).  This is
-	probably the bug that plagued String::Approx 3.0*
-	in HP-UX and Solaris.  I couldn't anymore repeat it
-	with in HP-UX, in Solaris it was still going strong.
-
+	  debugging by J. D. Laub (already back in November 1999,
+	  but I'm amazingly good at procrastinating).  This is
+	  probably the bug that plagued String::Approx 3.0*
+	  in HP-UX and Solaris.  I couldn't anymore repeat it
+	  in HP-UX, in Solaris it was still going strong.
+	
+	  The bug was really well camouflaged: it didn't
+	  overstep the buffer area as a whole, in which case it would
+	  have been found by Purify-like tools.  What was happening
+	  was that the code is maintaining a 2-dimensional bitmask
+	  (or a 3-dimensional bitbuffer, if you will), and under
+	  certain circumstances the bits from one dimension leaked
+	  into another.  The only user-visible API that was
+	  tickling the bug was aslice(), so if you weren't using that,
+	  you were probably okay.  In Solaris (and at some point HP-UX)
+	  the malloced buffers happened to be laid out so that bug
+	  was visible (e.g. in Linux, AIX, and Digital UNIX, it wasn't).
+	
 Mon Jul 19 10:42:13 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Released 3.09.

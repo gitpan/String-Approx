@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = "3.11";
+$VERSION = "3.12";
 
 use strict;
 local $^W = 1;
