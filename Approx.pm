@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.04;
+$VERSION = 3.06;
 
 require 5.004_04;
 
@@ -86,12 +86,13 @@ my %_complex_usage_count;
 
 sub _complex {
     my ($P, @param) = @_;
+    unshift @param, length $P;
     my $param = "@param";
     my $_param_key;
     my %param;
 
     unless (exists $_param_key{$param}) {
-	%param = _parse_param(length($P), @param);
+	%param = _parse_param(@param);
 	$_parsed_param{$param} = { %param };
 	$_param_key{$param} = join(" ", %param);
     } else {
@@ -262,18 +263,18 @@ String::Approx - Perl extension for approximate matching (fuzzy matching)
 
   print if amatch("foobar");
 
-  @matches = amatch("xyzzy", @inputs);
+  my @matches = amatch("xyzzy", @inputs);
 
-  @matches = amatch("plugh", ['2'], @inputs);
+  my @catches = amatch("plugh", ['2'], @inputs);
 
 =head1 DESCRIPTION
 
 String::Approx lets you match and substitute strings approximately.
-With approximateness you can emulate errors: typing errorrs, speling
-errors, closely related vocabularies (colour color), genetic mutations
-(GAG ACT), abbreviations (McScot, MacScot).
+With this you can emulate errors: typing errorrs, speling errors,
+closely related vocabularies (colour color), genetic mutations (GAG
+ACT), abbreviations (McScot, MacScot).
 
-The measure of B<approximateness> is the I<Levenshtein edit distance>.
+The measure of B<approximity> is the I<Levenshtein edit distance>.
 It is the total number of "edits": insertions,
 
 	word world
@@ -293,6 +294,9 @@ transform I<"lead"> into I<"gold">, you need three edits:
 
 The edit distance of "lead" and "gold" is therefore three.
 
+(NOTE: B<approximity> is a coinage, courtesy of Andy Oram; you won't
+ find it in a dictionary, but it sounds better than "approximateness")
+
 =head1 MATCH
 
 	use String::Approx 'amatch';
@@ -310,8 +314,8 @@ Notice that the pattern is a string.  Not a regular expression.  None
 of the regular expression notations (^, ., *, and so on) work.  They
 are characters just like the others.  Note-on-note: some limited form
 of I<"regular expressionism"> is planned in future: for example
-character classes ([abc]) and I<any-chars> (.).  But that feature needs
-to be turned on by a special I<modifier> (just a guess: "r"), so there
+character classes ([abc]) and I<any-chars> (.).  But that feature will
+be turned on by a special I<modifier> (just a guess: "r"), so there
 should be no backward compatibility problem.
 
 Notice also that matching is not symmetric.  The inputs are matched
@@ -321,16 +325,16 @@ element is always a superstring of the pattern.
 
 =head2 MODIFIERS
 
-With the modifiers you can control the amount of approximateness and
+With the modifiers you can control the amount of approximity and
 certain other control variables.  The modifiers are one or more
 strings, for example C<"i">, within a string optionally separated by
 whitespace.  The modifiers are inside an anonymous array: the C<[ ]>
 in the syntax are not notational, they really do mean C<[ ]>, for
 example C<[ "i", "2" ]>.  C<["2 i"]> would be identical.
 
-The implicit default approximateness is 10%, rounded up.  In other
+The implicit default approximity is 10%, rounded up.  In other
 words: every tenth character in the pattern may be an error, an edit.
-You can explicitly set the maximum approximateness by supplying a
+You can explicitly set the maximum approximity by supplying a
 modifier like
 
 	number
@@ -378,7 +382,7 @@ substitute in the B<$_>.  The replacement can contain magic strings
 B<$&>, B<$`>, B<$'> that stand for the matched string, the string
 before it, and the string after it, respectively.  All the other
 arguments are as in C<amatch()>, plus one additional modifier, C<"g">
-which means substitute globally (all the matches in an elemnt and not
+which means substitute globally (all the matches in an element and not
 just the first one, as is the default).
 
 See L<BAD NEWS> about the unfortunate stinginess of C<asubstitute()>.
@@ -449,7 +453,7 @@ change stemming from switching the matching algorithm.  Example: with
 edit distance of two and substituting for C<"word"> from C<"cork"> and
 C<"wool"> previously did match C<"cork"> and C<"wool">.  Now it does
 match C<"or"> and C<"wo">.  As little as possible, or, in other words,
-with as much approximateness, as many edits, as possible.  Because
+with as much approximity, as many edits, as possible.  Because
 there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 
 =item no more C<aregex()> because regular expressions are no more used
@@ -462,9 +466,10 @@ there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 
 The following people provided with valuable test cases and other feedback:
 Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij Frishman,
-Lars Gregersen, Kevin Greiner, Ricky Houghton, Helmut Jarausch,
-Sergey Novoselov, Stewart Russell, Slaven Rezic, Ilya Sandler,
-Bob J.A. Schijvenaars, Greg Ward, Rick Wise.
+Lars Gregersen, Kevin Greiner, Ricky Houghton, Helmut Jarausch, Mark
+Land, Sergey Novoselov, Andy Oram, Stewart Russell, Slaven Rezic,
+Chris Rosin, Ilya Sandler, Bob J.A. Schijvenaars, Greg Ward,
+Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.

@@ -25,7 +25,7 @@ Furthermore:
 
 /*
 
-  $Id: apse.h,v 1.12 1998/12/14 17:39:09 jhi Exp $
+  $Id: apse.h,v 1.14 1998/12/15 12:42:04 jhi Exp $
 
 */
 
@@ -33,7 +33,7 @@ Furthermore:
 #define APSE_H
 
 #define APSE_MAJOR_VERSION	0
-#define APSE_MINOR_VERSION	10
+#define APSE_MINOR_VERSION	14
 
 #include <sys/types.h>
 

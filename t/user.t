@@ -9,7 +9,7 @@ require 'util';
 
 local $^W = 1;
 
-print "1..21\n";
+print "1..25\n";
 
 # test 1: test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
@@ -229,5 +229,19 @@ print "ok 20\n";
 print "not " unless amatch("BURTONONTRENT",['5'], "BURTONUPONTRENT");
 print "ok 21\n";
 
-# eof
+# tests 22-25: Chris Rosin <crosin@cparity.com> and
+# Mark Land <mark@cparity.com>.
 
+print "not " if amatch("Karivaratharajan", "Rajan");
+print "ok 22\n";
+
+print "not " unless amatch("Rajan", "Karivaratharajan");
+print "ok 23\n";
+
+print "not " unless amatch("Ferna", "Fernandez");
+print "ok 24\n";
+
+print "not " if amatch("Fernandez", "Ferna");
+print "ok 25\n";
+
+# eof

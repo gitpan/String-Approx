@@ -1,6 +1,34 @@
-Thu Dec 17 13:17:58 1998  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+Wed Jun 16 14:19:39 1999  Jarkko Hietaniemi  <jhi@iki.fi>
 
-	* Approx.pm: Fixed parameter parsing bug: "i 1" was
+	* Approx.pm: Released 3.06.
+	
+	* Approx.pm: Release 3.06: Fixed a bug in caching
+	  of parsed parameters (the absolute length of the
+	  pattern must be cached, too). (Reported by
+	  Chris Rosin and Mark Land)
+
+	* Approx.pm: Fixed a couple of typos and introduced
+	  the coinage 'approximity' (to replace the clunky
+	  'approximateness').
+	
+	* t/user.t: Added four new tests from Rosin and Land.
+	
+Fri Jan  8 16:09:52 1999  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Approx.pm: Release 3.05.  No functional changes
+ 	  or bug fixes (no bugs reported), just a release
+	  that includes both the Artistic License and LGPL.
+
+Wed Dec 30 11:07:28 1998  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* MANIFEST: Added Artistic and LGPL, reworded COPYRIGHT
+	  slightly to comply.
+
+Thu Dec 17 13:17:58 1998  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Approx.pm: Released 3.04.
+
+	* Approx.pm: Fixed a parameter parsing bug: "i 1" was
 	  not accepted. (Reported by Bob J.A. Schijvenaars)
 
 	* Approx.pm: Documented that matching is asymmetric:
@@ -10,7 +38,7 @@ Thu Dec 17 13:17:58 1998  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
 	* Approx.pm: Added a few C<>s and I<>s to the pod.
 
 	* Approx.pm: Added an automatic flush to the pattern
-	  compilation caches.
+	  compilation caches (triggered by a high water mark).
 
 	* Approx.pm: Added "require 5.004_04;", Previously only
 	  Makefile.PL had this, but better be paranoid.

@@ -7,7 +7,10 @@ a) the GNU Library General Public License as published by the Free
    Software Foundation; either version 1, or (at your option) any
    later version, or
 
-b) the "Artistic License" which comes with Perl source code.
+b) the "Artistic License"; the original version of which is
+   released with the Perl distribution.
+
+These licenses come with the software as files "LGPL" and "Artistic".
 
 Other free software licensing schemes are negotiable.
 
@@ -18,4 +21,3 @@ Furthermore:
 
 (2) You shall include this copyright notice intact in all copies
     and derived materials.
-
