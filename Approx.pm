@@ -1,6 +1,8 @@
 package String::Approx;
 
-$VERSION = 3.03;
+$VERSION = 3.04;
+
+require 5.004_04;
 
 use strict;
 local $^W = 1;
@@ -17,12 +19,29 @@ require DynaLoader;
 
 bootstrap String::Approx $VERSION;
 
+my $CACHE_MAX	= 1000;		# high water mark
+my $CACHE_PURGE	= 0.75;		# purge this much of the least used
+my $CACHE_N_PURGE = $CACHE_MAX * $CACHE_PURGE;
+
 my %_simple;
+my %_simple_usage_count;
 
 sub _simple {
     my $P = shift;
 
     $_simple{$P} = new(__PACKAGE__, $P) unless exists $_simple{$P};
+
+    $_simple_usage_count{$P}++;
+
+    if (scalar keys %_simple_usage_count > $CACHE_MAX) {
+	my @usage =
+                sort { $_simple_usage_count{$a} <=> $_simple_usage_count{$b} }
+	             keys %_simple_usage_count;
+
+	foreach my $i (0..$CACHE_N_PURGE) {
+	    delete $_simple_usage_count{$usage[$i]};
+	}
+    }
 
     return ( $_simple{$P} );
 }
@@ -34,9 +53,9 @@ sub _parse_param {
     my %param;
 
     foreach (@param) {
-        s/^\s+//;
         while ($_ ne '') {
-            if (s/^([IDS])?(\d+)(%)?//) {
+	    s/^\s+//;
+            if (s/^([IDS]\s*)?(\d+)(\s*%)?//) {
                 my $k = defined $3 ? (($2-1) * $n) / 100 + 1 : $2;
 
 		if (defined $1) {
@@ -51,7 +70,7 @@ sub _parse_param {
             } elsif (s/^\?//) {
                 $param{'?'} = 1;
             } else {
-                die "unknown match parameter: $_\n";
+                die "unknown match parameter: '$_'\n";
             }
         }
     }
@@ -63,6 +82,7 @@ my %_param_key;
 my %_parsed_param;
 
 my %_complex;
+my %_complex_usage_count;
 
 sub _complex {
     my ($P, @param) = @_;
@@ -101,6 +121,19 @@ sub _complex {
 	
 	$_complex{$P}->{$_param_key}->set_caseignore_slice
 	    if exists $param{'i'};
+    }
+
+    $_complex_usage_count{$P}->{$_param_key}++;
+
+    if (scalar keys %_complex_usage_count > $CACHE_MAX) {
+	my @usage =
+                sort { $_complex_usage_count{$a} <=>
+                       $_complex_usage_count{$b} }
+	             keys %_complex_usage_count;
+
+	foreach my $i (0..$CACHE_N_PURGE) {
+	    delete $_complex_usage_count{$usage[$i]};
+	}
     }
 
     return ( $_complex{$P}->{$_param_key}, %param );
@@ -254,7 +287,7 @@ and substitutions
 	sun fun
 
 required to transform a string to another string.  For example, to
-transform "lead" to "gold", you need three edits:
+transform I<"lead"> into I<"gold">, you need three edits:
 
 	lead gead goad gold
 
@@ -273,17 +306,27 @@ Match B<pattern> approximately.  In list context return the matched
 B<@inputs>.  If no inputs are given, match against the B<$_>.  In scalar
 context return true if I<any> of the inputs match, false if none match.
 
-Notice that the pattern is a string.  Not a regular expression.
-None of the regular expression notations (^, ., *, and so on) work.
-They are characters just like the others.
+Notice that the pattern is a string.  Not a regular expression.  None
+of the regular expression notations (^, ., *, and so on) work.  They
+are characters just like the others.  Note-on-note: some limited form
+of I<"regular expressionism"> is planned in future: for example
+character classes ([abc]) and I<any-chars> (.).  But that feature needs
+to be turned on by a special I<modifier> (just a guess: "r"), so there
+should be no backward compatibility problem.
+
+Notice also that matching is not symmetric.  The inputs are matched
+against the pattern, not the other way round.  In other words: the
+pattern can be a substring, a submatch, of an input element.  An input
+element is always a superstring of the pattern.
 
 =head2 MODIFIERS
 
-With the modifiers you can control the amount of approximateness
-and certain other variables.  The modifiers are one or more strings,
-for example "i".  The modifiers are inside an anonymous array: the [ ]
-in the syntax are not notational, they really do mean [ ],
-for example [ "i", "2" ].  ["2 i"] would be identical.
+With the modifiers you can control the amount of approximateness and
+certain other control variables.  The modifiers are one or more
+strings, for example C<"i">, within a string optionally separated by
+whitespace.  The modifiers are inside an anonymous array: the C<[ ]>
+in the syntax are not notational, they really do mean C<[ ]>, for
+example C<[ "i", "2" ]>.  C<["2 i"]> would be identical.
 
 The implicit default approximateness is 10%, rounded up.  In other
 words: every tenth character in the pattern may be an error, an edit.
@@ -293,7 +336,7 @@ modifier like
 	number
 	number%
 
-Examples: "3", "15%".
+Examples: C<"3">, C<"15%">.
 
 Using a similar syntax you can separately control the maximum number
 of insertions, deletions, and substitutions by prefixing the numbers
@@ -306,10 +349,10 @@ with I, D, or S, like this:
 	Snumber
 	Snumber%
 
-Examples: "I2", "D20%", "S0".
+Examples: C<"I2">, C<"D20%">, C<"S0">.
 
-You can ignore case ("A" becames equal to "a" and vice versa)
-by adding the "i" modifier.
+You can ignore case (C<"A"> becames equal to C<"a"> and vice versa)
+by adding the C<"i"> modifier.
 
 For example
 
@@ -363,7 +406,8 @@ If you want to simulate transposes
 	feet fete
 
 you need to allow at least edit distance of two because in terms of
-our edit primitives a transpose is one deletion and one insertion.
+our edit primitives a transpose is one first deletion and then one
+insertion.
 
 =head1 VERSION
 
@@ -381,7 +425,10 @@ our edit primitives a transpose is one deletion and one insertion.
 
 The algorithm is independent on the pattern length: its time
 complexity is I<O(kn)>, where I<k> is the number of edits and I<n> the
-length of the text (input).
+length of the text (input).  The preprocessing of the pattern will of
+course take some I<O(m)> (I<m> being the pattern length) time, but
+C<amatch()> and C<asubstitute()> cache the result of this
+preprocessing so that it is done only once per pattern.
 
 =back
 

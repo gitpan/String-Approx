@@ -1,9 +1,41 @@
+Thu Dec 17 13:17:58 1998  Jarkko Hietaniemi  <jhi@alpha.hut.fi>
+
+	* Approx.pm: Fixed parameter parsing bug: "i 1" was
+	  not accepted. (Reported by Bob J.A. Schijvenaars)
+
+	* Approx.pm: Documented that matching is asymmetric:
+	  the inputs are matched against the pattern, not the
+	  other way round.
+
+	* Approx.pm: Added a few C<>s and I<>s to the pod.
+
+	* Approx.pm: Added an automatic flush to the pattern
+	  compilation caches.
+
+	* Approx.pm: Added "require 5.004_04;", Previously only
+	  Makefile.PL had this, but better be paranoid.
+
+Wed Dec 16 10:28:07 1998  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Approx.pm: Released 3.03.
+
+	* Approx.pm: Added confirmation from Udi Manber
+	  to README: it's not a problem that I have looked
+	  at agrep code.  My code is my code and can be
+	  used within the limits set by my copyright.
+	
+	* Approx.xs: Removed a lot of the glue code
+	  because it is not yet reachable via Approx.pm.
+	  Later.
+	
 Wed Dec 16 01:23:58 1998  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Approx.pm: Released 3.02.
 
 	* README: Added a clarification about our relationship
 	  with agrep.  There is no common code.  None.
+	  Waiting for confirmation from Udi Manber.
+	  (The concern raised by Slaven Rezic).
 	
 	* Approx.xs: fixed the PL_na mess for now, will
 	  have to figure out the correct way.  Tested
