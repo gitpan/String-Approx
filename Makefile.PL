@@ -11,6 +11,6 @@ bench:
 
 WriteMakefile(
     'NAME'	=> 'String::Approx',
-    'VERSION'	=> 2.3,
+    'VERSION'	=> 2.4,
     'dist'	=> { 'COMPRESS' => 'gzip' }
 );

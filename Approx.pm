@@ -422,7 +422,7 @@ Also this tends to be somewhat slower.
 
 =head1 VERSION
 
-Version 2.3.
+Version 2.4.
 
 =head1 LIMITATIONS
 
@@ -452,9 +452,10 @@ you must use shorter patterns.
 We are still now at release 2.3 about 100 times slower than B<agrep>.
 
 If you do not know what C<agrep> is: it is a program like the UNIX
-grep but it knows, among other things, how to do approximate matching.
-B<NOTE>: all these speeds were measured in one particular system using
-one particular set of tests: your mileage will vary.
+grep for searching text from within files but it knows, among other
+things, how to do approximate matching.  B<NOTE>: all these speeds
+were measured in one particular system using one particular set of
+tests: your mileage will vary.
 
 =head2 Incompatibilities with C<String::Approx> I<v1.*>
 
@@ -482,6 +483,7 @@ Jarkko Hietaniemi C<E<lt>jhi@iki.fiE<gt>>
 	Alberto Fontaneda C<E<lt>alberfon@ctv.esE<gt>>
 	Dmitrij Frishman C<E<lt>frishman@mips.biochem.mpg.deE<gt>>
 	Lars Gregersen C<E<lt>lars.gregersen@private.dkE<gt>>
+	Helmut Jarausch C<E<lt>jarausch@IGPM.Rwth-Aachen.DEE<gt>>
 	Håkan Kjellerstrand C<E<lt>hakank@netch.seE<gt>>
 	Nathan Torkington C<E<lt>gnat@frii.comE<gt>>
 
@@ -492,6 +494,8 @@ Lars Gregersen saw String::Approx 2.2 and Håkan Kjellerstrand's MakeRegex
 and that moment he experienced a genuine Eureka.  The result: up to thirty
 times faster String::Approx.  (MakeRegex was used for completely other
 purposes).
+
+Helmut Jarausch notice that 2.3 asubst() failed its test case in 5.004_50+.
 
 Nathan Torkington is to blame for the new API of release 2. :-)
 
@@ -921,7 +925,7 @@ sub _amatch {
     my $len = length($pattern);
     my $remods;
     my $greed = 1;
-    my $std    = 0;
+    my $std   = 0;
 
     if (ref $$list[0] or $compat1) {
 	my $mods;
@@ -933,8 +937,8 @@ sub _amatch {
 	    $mods = shift(@$list);
 	}
 
-	$greed = 0 if grep { /\?/ } @$mods;
-	$std    = 1 if grep { /std/ } @$mods;
+	$greed = 0 if grep { /\?/  } @$mods;
+	$std   = 1 if grep { /std/ } @$mods;
 
 	$remods = _mods($mods, \$aI, \$aD, \$aS, \$rI, \$rD, \$rS);
 
@@ -1040,11 +1044,11 @@ sub amatch {
 }
 
 sub _subst {
-    my ($sub, $pre, $match, $post) = @_;
+    my ($sub, $a, $b, $c) = @_;
 
-    $sub =~ s/\$`/$pre/g;
-    $sub =~ s/\$&/$match/g;
-    $sub =~ s/\$'/$post/g;
+    $sub =~ s/\$`/$a/g;
+    $sub =~ s/\$&/$b/g;
+    $sub =~ s/\$'/$c/g;
 
     $sub;
 }
@@ -1069,8 +1073,8 @@ sub asubstitute {
 	    $mods = shift(@list);
 	}
 
-	$greed = 0 if grep { /\?/ } @$mods;
-	$std    = 1 if grep { /std/ } @$mods;
+	$greed = 0 if grep { /\?/  } @$mods;
+	$std   = 1 if grep { /std/ } @$mods;
 
 	$remods = _mods($mods, \$aI, \$aD, \$aS, \$rI, \$rD, \$rS);
 
@@ -1091,14 +1095,24 @@ sub asubstitute {
     
     $spat = '(?' . $remods . ')' . $spat if defined $remods;
 
+    my ($s, $ss) = (0, 0);
+
+    eval { '' =~ /$spat/ };
+    die "asubstitute: too long pattern, maximum pattern length 19.\n"
+	if ($@ =~ /regexp too big/);
+
     if (@list) {
-	my (@m, $sm, $s);
+	my ($sm, @m);
 
 	foreach $sm (@list) {
-	    eval { $s = $sm =~ s/($spat)/_subst($sub, $`, $1, $')/e };
-	    die "asubstitute: too long pattern, maximum pattern length 19.\n"
-		if ($@ =~ /regexp too big/);
-	    push(@m, $sm) if ($s);
+	    # (?g) does not work.
+	    if ( defined $remods and $remods =~ /g/ ) {
+		push(@m, $sm)
+		    if $sm =~ s/($spat)/_subst($sub,$`,$&,$')/eg;
+	    } else {
+		push(@m, $sm)
+		    if $sm =~ s/($spat)/_subst($sub,$`,$&,$')/e;
+	    }
 	}
 
 	return @m;
@@ -1107,12 +1121,14 @@ sub asubstitute {
     die "asubstitute: \$_ is undefined: what are you matching against?\n"
 	unless defined $_;
 
-    my $s;
-
-    eval { $s = s/($spat)/_subst($sub, $`, $1, $')/e };
-    die "asubstitute: too long pattern, maximum pattern length 19.\n"
-	if ($@ =~ /regexp too big/);
-    return ($_) if $s;
+    # (?g) does not work.
+    if ( defined $remods and $remods =~ /g/ ) {
+	return ($_)
+	    if s/($spat)/_subst($sub,$`,$&,$')/eg;
+    } else {
+	return ($_)
+	    if s/($spat)/_subst($sub,$`,$&,$')/e;
+    }
 
     ();
 }

@@ -1,4 +1,4 @@
-use String::Approx 'asubstitute';
+use String::Approx qw(asubstitute aregex);
 
 chdir('t') or die "could not chdir to 't'";
 
