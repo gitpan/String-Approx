@@ -1,0 +1,14 @@
+Wed Dec 16 01:23:58 1998  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Approx.pm: Released 3.02.
+
+	* README: Added a clarification about our relationship
+	  with agrep.  There is no common code.  None.
+	
+	* Approx.xs: fixed the PL_na mess for now, will
+	  have to figure out the correct way.  Tested
+	  under 5.004-maint, 5.005-maint, and 5.005-devel.
+
+	* Approx.pm: Released 3.01 (actually already Dec 15).
+	
+

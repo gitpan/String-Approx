@@ -4,11 +4,16 @@ extern "C" {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "patchlevel.h"
 #ifdef __cplusplus
 }
 #endif
 
 #include "apse.h"
+
+#if PATCHLEVEL < 5
+# define PL_na na
+#endif
 
 MODULE = String::Approx		PACKAGE = String::Approx		
 
@@ -58,17 +63,6 @@ match(ap, text)
     OUTPUT:
 	RETVAL
 
-apse_ssize_t
-index(ap, text)
-	apse_t *	ap
-	SV *		text
-    CODE:
-	RETVAL = apse_index(ap,
-			    (unsigned char *)SvPV(text, PL_na),
-			    SvCUR(text));
-    OUTPUT:
-	RETVAL
-
 void
 slice(ap, text)
 	apse_t *	ap
@@ -98,17 +92,6 @@ match_next(ap, text)
     OUTPUT:
 	RETVAL
 
-apse_ssize_t
-index_next(ap, text)
-	apse_t *	ap
-	SV *		text
-    CODE:
-	RETVAL = apse_index_next(ap,
-				 (unsigned char *)SvPV(text, PL_na),
-				 SvCUR(text));
-    OUTPUT:
-	RETVAL
-
 void
 slice_next(ap, text)
 	apse_t *	ap
@@ -128,38 +111,10 @@ slice_next(ap, text)
 	}
 
 void
-reset(ap)
-	apse_t *	ap
-    CODE:
-	apse_reset(ap);
-
-void
 set_greedy(ap)
 	apse_t *	ap
     CODE:
 	apse_set_greedy(ap, 1);
-
-apse_bool_t
-get_greedy(ap)
-	apse_t *	ap
-    CODE:
-	RETVAL = apse_get_greedy(ap);
-    OUTPUT:
-	RETVAL
-
-void
-set_stingy(ap)
-	apse_t *	ap
-    CODE:
-	apse_set_greedy(ap, 0);
-
-apse_bool_t
-get_stingy(ap)
-	apse_t *	ap
-    CODE:
-	RETVAL = !apse_get_greedy(ap);
-    OUTPUT:
-	RETVAL
 
 apse_bool_t
 set_caseignore_slice(ap, ...)
@@ -177,50 +132,6 @@ set_caseignore_slice(ap, ...)
 	RETVAL
 
 apse_bool_t
-set_exact_slice(ap, ...)
-	apse_t *	ap
-    PREINIT:
-	apse_size_t	offset;
-	apse_size_t	size;
-	apse_bool_t	exact;
-    CODE:
-	offset = items < 2 ? 0 : (apse_size_t)SvIV(ST(1));
-	size   = items < 3 ? ap->pattern_size : (apse_size_t)SvIV(ST(2));
-	exact  = items < 4 ? 1 : (apse_bool_t)SvIV(ST(3));
-	RETVAL = apse_set_exact_slice(ap, offset, size, exact);
-    OUTPUT:
-	RETVAL
-
-apse_bool_t
-set_charset(ap, offset, charset, ...)
-	apse_t *	ap
-	apse_size_t	offset = SvUV($arg);
-	SV *		charset
-    PREINIT:
-	apse_bool_t	complement;
-    CODE:
-	complement = items < 4 ? 0 : (apse_bool_t)SvIV(ST(3));
-	RETVAL = apse_set_charset(ap, offset,
-				  (unsigned char *)SvPV(charset, PL_na),
-				  SvCUR(charset),
-				  complement);
-    OUTPUT:
-	RETVAL
-
-apse_bool_t
-set_anychar(ap, offset)
-	apse_t *	ap
-	apse_size_t	offset
-    PREINIT:
-	apse_bool_t	okay;
-    CODE:
-	okay = apse_set_anychar(ap, offset);
-	if (okay)
-		sv_setiv(ST(0), okay);
-	else
-		ST(0) = &PL_sv_undef;
-
-apse_bool_t
 set_insertions(ap, insertions)
 	apse_t *	ap
 	apse_size_t	insertions = SvUV($arg);
@@ -228,13 +139,6 @@ set_insertions(ap, insertions)
 	RETVAL = apse_set_insertions(ap, insertions);
     OUTPUT:
 	RETVAL
-
-apse_size_t
-get_insertions(ap)
-	apse_t *	ap
-    CODE:
-	ST(0) = sv_newmortal();
-	sv_setiv(ST(0), apse_get_insertions(ap));
 
 apse_bool_t
 set_deletions(ap, deletions)
@@ -245,13 +149,6 @@ set_deletions(ap, deletions)
     OUTPUT:
 	RETVAL
 
-apse_size_t
-get_deletions(ap)
-	apse_t *	ap
-    CODE:
-	ST(0) = sv_newmortal();
-	sv_setiv(ST(0), apse_get_deletions(ap));
-
 apse_bool_t
 set_substitutions(ap, substitutions)
 	apse_t *	ap
@@ -260,13 +157,6 @@ set_substitutions(ap, substitutions)
 	RETVAL = apse_set_substitutions(ap, substitutions);
     OUTPUT:
 	RETVAL
-
-apse_size_t
-get_substitutions(ap)
-	apse_t *	ap
-    CODE:
-	ST(0) = sv_newmortal();
-	sv_setiv(ST(0), apse_get_substitutions(ap));
 
 apse_bool_t
 set_edit_distance(ap, edit_distance)
