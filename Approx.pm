@@ -422,7 +422,7 @@ Also this tends to be somewhat slower.
 
 =head1 VERSION
 
-Version 2.4.
+Version 2.5.
 
 =head1 LIMITATIONS
 
@@ -495,7 +495,7 @@ and that moment he experienced a genuine Eureka.  The result: up to thirty
 times faster String::Approx.  (MakeRegex was used for completely other
 purposes).
 
-Helmut Jarausch notice that 2.3 asubst() failed its test case in 5.004_50+.
+Helmut Jarausch noticed that 2.3 asubst() failed its test case in 5.004_50+.
 
 Nathan Torkington is to blame for the new API of release 2. :-)
 
@@ -504,14 +504,14 @@ Nathan Torkington is to blame for the new API of release 2. :-)
 require 5;
 
 use strict;
-$^W = 1;
+local $^W = 1;
 
 use vars qw($PACKAGE $VERSION $compat1
 	    @ISA @EXPORT_OK
 	    %P @aL @dL @Pl %Pp);
 
 $PACKAGE = 'String::Approx';
-$VERSION = '2.0';
+$VERSION = '2.5';
 
 $compat1 = 0;
 
