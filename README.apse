@@ -55,17 +55,17 @@ feature I have an invention of mine where one can for example
 completely disallow substitutions.  The feature is still largely
 untested (as is the whole program, come to think of it).
 
-Please read the COPYRIGHT.apse.  This implementation shares no code
-with agrep, none, it was made from scratch based on the Manber and Wu
-papers.  Still, I have looked at the source code of agrep.
-Therefore I also include in this distribution the original agrep
-copyright, in the file COPYRIGHT.agrep.  The inclusion of this file in
-no way affects the copyright of my code or the applicability of it to
-any purposes, even commercial ones.  The existence of COPYRIGHT.agrep
-only serves the clause (2) in it.  The clauses (1) and (4) don't apply
-because this is not agrep.  In clause (3) our copyrights agree.
-NOTE: as of String::Approx 3.02 this is still just my interpretation.
-I have asked Udi Manber's comment.
+Please read the COPYRIGHT.  This implementation shares no code with
+agrep, none, it was made from scratch based on the Manber and Wu
+papers.  Still, I have looked at the source code of agrep.  Therefore
+I also include in this distribution the original agrep copyright, in
+the file COPYRIGHT.agrep.  The inclusion of this file in no way
+affects the copyright of my code or the applicability of it to any
+purposes, even commercial ones.  The existence of COPYRIGHT.agrep only
+serves the clause (2) in it, courtesy.  The clauses (1) and (4) don't
+apply because this is not agrep.  In clause (3) our copyrights agree,
+we guarantee nothing.  This interpretation has been kindly sanctioned
+by Udi Manber.
 
 If you have any questions, detailed bug reports, enhancement
 suggestions, feature requests, or fan mail (I would like to know of

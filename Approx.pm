@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = 3.02;
+$VERSION = 3.03;
 
 use strict;
 local $^W = 1;
@@ -413,23 +413,14 @@ there is no I<need> to match the C<"c"> of C<"cork">, it is not matched.
 
 =head1 ACKNOWLEDGEMENTS
 
-The following people provided with valuable test cases and other feedback.
+The following people provided with valuable test cases and other feedback:
+Jared August, Steve A. Chervitz, Alberto Fontaneda, Dmitrij Frishman,
+Lars Gregersen, Kevin Greiner, Ricky Houghton, Helmut Jarausch,
+Sergey Novoselov, Stewart Russell, Slaven Rezic, Ilya Sandler,
+Bob J.A. Schijvenaars, Greg Ward, Rick Wise.
 
-	Jared August <rudeop@skapunx.net>
-	Steve A. Chervitz <sac@genome.Stanford.edu>
-	Alberto Fontaneda <alberfon@ctv.es>
-	Dmitrij Frishman <frishman@mips.biochem.mpg.de>
-	Lars Gregersen <lars.gregersen@private.dk>
-	Kevin Greiner <kgreiner@geosys.com>
-	Ricky Houghton <ricky.houghton@cs.cmu.edu>
-	Helmut Jarausch <jarausch@IGPM.Rwth-Aachen.DE>
-	Sergey Novoselov <snovo@usa.net>
-	Stewart Russell <stewart@ref.collins.co.uk>
-	Slaven Rezic <eserte@cs.tu-berlin.de>
-	Ilya Sandler <sandler@etak.com> 
-	Bob J.A. Schijvenaars <schijvenaars@mi.fgg.eur.nl>
-	Greg Ward <greg@bic.mni.mcgill.ca>
-	Rick Wise <rwise@lcc.com>
+The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
+Gopal in the Department of Computer Science, University of Arizona.
 
 =head1 AUTHOR
 
