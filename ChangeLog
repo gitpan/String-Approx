@@ -1,7 +1,16 @@
+2005-05-24  Jarkko Hietaniemi  <jhi@iki.fi>
+	
+	* Pure documentation cleanup release to address
+	  http://rt.cpan.org/NoAuth/Bug.html?id=12196
+	  "Small String::Approx Pod issue"
+	
+	* Released as 3.25.
+
 2005-01-02  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Pure documentation cleanup release to address
 	  http://rt.cpan.org/NoAuth/Bug.html?id=6668
+	  "Unfortunate perldoc rendering of String::Approx"
 	
 	* Released as 3.24.
 

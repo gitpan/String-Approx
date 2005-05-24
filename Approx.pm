@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = '3.24';
+$VERSION = '3.25';
 
 use strict;
 local $^W = 1;
@@ -650,7 +650,7 @@ There's also backwards-scanning C<arindex()>.
 
 =head1 SLICE
 
-	use String::Approx 'aindex';
+	use String::Approx 'aslice';
 
 	($index, $size)   = aslice("pattern")
 	([$i0, $s0], ...) = aslice("pattern", @inputs)
@@ -856,11 +856,12 @@ Aldo Calpini, David Curiel, Teun van den Dool, Alberto Fontaneda,
 Rob Fugina, Dmitrij Frishman, Lars Gregersen, Kevin Greiner,
 B. Elijah Griffin, Mike Hanafey, Mitch Helle, Ricky Houghton,
 'idallen', Helmut Jarausch, Damian Keefe, Ben Kennedy, Craig Kelley,
-Franz Kirsch, Dag Kristian, Mark Land, J. D. Laub, Tim Maher,
-Juha Muilu, Sergey Novoselov, Andy Oram, Ji Y Park, Eric Promislow,
-Nikolaus Rath, Stefan Ram, Dag Kristian Rognlien, Stewart Russell,
-Slaven Rezic, Chris Rosin, Pasha Sadri, Ilya Sandler, Bob J.A. Schijvenaars,
-Ross Smith, Frank Tobin, Greg Ward, Rich Williams, Rick Wise.
+Franz Kirsch, Dag Kristian, Mark Land, J. D. Laub, John P. Linderman,
+Tim Maher, Juha Muilu, Sergey Novoselov, Andy Oram, Ji Y Park,
+Eric Promislow, Nikolaus Rath, Stefan Ram, Slaven Rezic,
+Dag Kristian Rognlien, Stewart Russell, Slaven Rezic, Chris Rosin,
+Pasha Sadri, Ilya Sandler, Bob J.A. Schijvenaars, Ross Smith,
+Frank Tobin, Greg Ward, Rich Williams, Rick Wise.
 
 The matching algorithm was developed by Udi Manber, Sun Wu, and Burra
 Gopal in the Department of Computer Science, University of Arizona.
