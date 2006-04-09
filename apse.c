@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) by Jarkko Hietaniemi, 1998,1999,2000,2001,2002,2003.
+Copyright (C) by Jarkko Hietaniemi, 1998,1999,2000,2001,2002,2003,2006.
 All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ Furthermore:
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
 
 #define APSE_BITS_IN_BITVEC	(8*sizeof(apse_vec_t))
 
@@ -274,7 +275,7 @@ static int _apse_wrap_slice(apse_t*		ap,
 			    apse_ssize_t*	begin_out,
 			    apse_ssize_t*	size_out) {
     if (begin_in < 0) {
-	if (-begin_in > ap->pattern_size)
+	if ((apse_size_t)-begin_in > ap->pattern_size)
 	    return 0;
 	begin_in = ap->pattern_size + begin_in;
     }
@@ -286,10 +287,10 @@ static int _apse_wrap_slice(apse_t*		ap,
 	begin_in -=  size_in;
     }
 
-    if (begin_in >= ap->pattern_size)
+    if ((apse_size_t)begin_in >= ap->pattern_size)
 	return 0;
 	
-    if (begin_in + size_in > ap->pattern_size)
+    if ((apse_size_t)begin_in + size_in > ap->pattern_size)
 	size_in = ap->pattern_size - begin_in;
 
     if (begin_out)
@@ -331,8 +332,9 @@ apse_bool_t apse_set_charset(apse_t*		ap,
 			     apse_size_t	set_size,
 			     apse_bool_t	complement) {
     apse_size_t	bitvectors_in_state = ap->bitvectors_in_state;
-    apse_ssize_t	true_index, i;
+    apse_ssize_t	true_index;
     apse_bool_t	okay = 0;
+    apse_size_t i;
 
     if (!_apse_wrap_slice(ap, pattern_index, (apse_ssize_t)1,
 			      &true_index, 0))
@@ -429,7 +431,9 @@ void apse_reset(apse_t *ap) {
     _apse_reset_state(ap);
 
     ap->text_position = ap->text_initial_position;
-    ap->text_position_range = APSE_MATCH_BAD;
+#if 0
+    ap->text_position_range = APSE_MATCH_BAD; /* Do not reset this. */
+#endif
 
     ap->match_state = APSE_MATCH_STATE_BOT;
     ap->match_begin = APSE_MATCH_BAD;
@@ -515,8 +519,9 @@ apse_bool_t apse_set_exact_slice(apse_t*	ap,
 				 apse_ssize_t	exact_begin,
 				 apse_ssize_t	exact_size,
 				 apse_bool_t	exact) {
-    apse_ssize_t	i, j, true_begin, true_size;
+    apse_ssize_t	true_begin, true_size;
     apse_bool_t	okay = 0;
+    apse_size_t i, j;
 
     if (!ap->exact_mask) {
 

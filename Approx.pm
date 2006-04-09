@@ -1,6 +1,6 @@
 package String::Approx;
 
-$VERSION = '3.25';
+$VERSION = '3.26';
 
 use strict;
 local $^W = 1;
@@ -480,6 +480,7 @@ sub arindex {
 
 1;
 __END__
+=pod
 
 =head1 NAME
 
@@ -502,15 +503,21 @@ With this you can emulate errors: typing errorrs, speling errors,
 closely related vocabularies (colour color), genetic mutations (GAG
 ACT), abbreviations (McScot, MacScot).
 
-NOTE: String::Approx has been designed to work with B<strings>, not
-with B<text>.  In other words, when you want to compare things like
-text or source code, consisting of B<words> or B<tokens> and
-B<phrases> and B<sentences>, or B<expressions> and B<statements>,
-you should probably use some other tool than String::Approx, like for
-example the standard UNIX diff(1) tool, or the Algorithm::Diff module
-from CPAN, or if you just want the Levenshtein edit distance
-(explained below), the Text::Levenshtein module from CPAN.  See also
-Text::WagnerFischer and Text::PhraseDistance.
+NOTE: String::Approx suits the task of B<string matching>, not 
+B<string comparison>, and it works for B<strings>, not for B<text>.
+
+If you want to compare strings for similarity, you probably just want
+the Levenshtein edit distance (explained below), the Text::Levenshtein
+and Text::LevenshteinXS modules in CPAN.  See also Text::WagnerFischer
+and Text::PhraseDistance.  (There are functions for this in String::Approx,
+e.g. adist(), but their results sometimes differ from the bare Levenshtein
+et al.)
+
+If you want to compare things like text or source code, consisting of
+B<words> or B<tokens> and B<phrases> and B<sentences>, or
+B<expressions> and B<statements>, you should probably use some other
+tool than String::Approx, like for example the standard UNIX diff(1)
+tool, or the Algorithm::Diff module from CPAN.
 
 The measure of B<approximateness> is the I<Levenshtein edit distance>.
 It is the total number of "edits": insertions,
@@ -531,6 +538,12 @@ transform I<"lead"> into I<"gold">, you need three edits:
 	lead gead goad gold
 
 The edit distance of "lead" and "gold" is therefore three, or 75%.
+
+B<String::Approx uses the Levenshtein edit distance (tLed) as its
+measure, but String::Approx is not well-suited for comparing the tLeds
+of strings, in other words, if you want a "fuzzy eq", see above.
+Strings::Approx is more like regular expressions or index(), it finds
+substrings that are close matches.>
 
 =head1 MATCH
 
@@ -610,6 +623,9 @@ means I<ignore case>, I<allow every fourth character to be "an edit">,
 but allow I<no substitutions>.  (See L<NOTES> about disallowing
 substitutions or insertions.)
 
+NOTE: setting C<I0 D0 S0> is not equivalent to using index().
+If you want to use index(), use index().
+
 =head1 SUBSTITUTE
 
 	use String::Approx 'asubstitute';
@@ -646,6 +662,13 @@ matches approximately.  In list context and if C<@inputs> are used,
 returns a list of indices, one index for each input element.
 If there's no approximate match, C<-1> is returned as the index.
 
+NOTE: if there is character repetition (e.g. "aa") either in
+the pattern or in the text, the returned index might start 
+"too early".  This is consistent with the goal of the module
+of matching "as early as possible", just like regular expressions
+(that there might be a "less approximate" match starting later is
+of somewhat irrelevant).
+
 There's also backwards-scanning C<arindex()>.
 
 =head1 SLICE
@@ -661,9 +684,10 @@ Like C<aindex()> but returns also the size (length) of the match.
 If the match fails, returns an empty list (when matching against C<$_>)
 or an empty anonymous list corresponding to the particular input.
 
-Note that the size of the match will very probably be something you
-did not expect (such as longer than the pattern, or a negative
-number).  This may or may not be fixed in future releases.
+NOTE: size of the match will very probably be something you did not
+expect (such as longer than the pattern, or a negative number).  This
+may or may not be fixed in future releases. Also the beginning of the
+match may vary from the expected as with aindex(), see above.
 
 If the modifier
 

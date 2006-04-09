@@ -1,42 +1,43 @@
 use String::Approx 'aslice';
+use Test::More tests => 20;
 
 chdir('t') or die "could not chdir to 't'";
 
 require 'util';
 
-print "1..6\n";
-
 @s = aslice("xyz", "abcdef");
-print "not " unless @s == 1 && @{$s[0]} == 0;
-print "ok 1\n";
+is(@s, 1);
+is(@{$s[0]}, 0);
 
 @s = aslice("xyz", "abcdefxyzghi");
-print "not " unless @s == 1 && $s[0]->[0] == 6 && $s[0]->[1] == 4;
-print "ok 2\n";
+is(@s, 1);
+is($s[0]->[0], 6);
+is($s[0]->[1], 4);;
 
 @s = aslice("xyz", ["i"], "ABCDEFXYZGHI");
-print "not " unless @s == 1 && $s[0]->[0] == 6 && $s[0]->[1] == 4;
-print "ok 3\n";
+is(@s, 1);
+is($s[0]->[0], 6);
+is($s[0]->[1], 4);
 
 @s = aslice("xyz", ["minimal_distance"], "abcdefx!yzghi");
 print "# @{$s[0]}\n";
-print "not "
-	unless @s == 1 && $s[0]->[0] == 6 &&
-	       $s[0]->[1] == 4 && $s[0]->[2] == 1;
-print "ok 4\n";
+is(@s, 1);
+is($s[0]->[0], 6);
+is($s[0]->[1], 4);
+is($s[0]->[2], 1);
 
 @s = aslice("xyz", ["minimal_distance"], "abcdefxzghi");
 print "# @{$s[0]}\n";
-print "not "
-	unless @s == 1 && $s[0]->[0] == 6 &&
-	       $s[0]->[1] == 2 && $s[0]->[2] == 1;
-print "ok 5\n";
+is(@s, 1);
+is($s[0]->[0], 6);
+is($s[0]->[1], 2);
+is($s[0]->[2], 1);
 
 @s = aslice("xyz", ["minimal_distance"], "abcdefx!zghi");
 print "# @{$s[0]}\n";
-print "not "
-	unless @s == 1 && $s[0]->[0] == 6 &&
-	       $s[0]->[1] == 3 && $s[0]->[2] == 1;
-print "ok 6\n";
+is(@s, 1);
+is($s[0]->[0], 6);
+is($s[0]->[1], 3);
+is($s[0]->[2], 1);
 
 # that's it.

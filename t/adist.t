@@ -1,97 +1,72 @@
 use String::Approx qw(adist adistr adistword adistrword);
+use Test::More tests => 28;
 
 chdir('t') or die "could not chdir to 't'";
 
-print "1..26\n";
+is(adist("abc", "abc"), 0);
 
-print "not " unless adist("abc", "abc") == 0;
-print "ok 1\n";
+is(adist("abc", "abd"), 1);
 
-print "not " unless adist("abc", "abd") == 1;
-print "ok 2\n";
+is(adist("abc", "ade"), 2);
 
-print "not " unless adist("abc", "ade") == 2;
-print "ok 3\n";
+is(adist("abc", "def"), 3);
 
-print "not " unless adist("abc", "def") == 3;
-print "ok 4\n";
-
-print "not " unless adistr("abc", "abd") == 1/3;
-print "ok 5\n";
+is(adistr("abc", "abd"), 1/3);
 
 $a = adist("abc", ["abc", "abd", "ade", "def"]);
 
-print "not " unless $a->[0] == 0;
-print "ok 6\n";
+is($a->[0], 0);
 
-print "not " unless $a->[1] == 1;
-print "ok 7\n";
+is($a->[1], 1);
 
-print "not " unless $a->[2] == 2;
-print "ok 8\n";
+is($a->[2], 2);
 
-print "not " unless $a->[3] == 3;
-print "ok 9\n";
+is($a->[3], 3);
 
-print "not " unless @$a == 4;
-print "ok 10\n";
+is(@$a, 4);
 
 $a = adist(["abc", "abd", "ade", "def"], "abc");
 
-print "not " unless $a->[0] == 0;
-print "ok 11\n";
+is($a->[0], 0);
 
-print "not " unless $a->[1] == 1;
-print "ok 12\n";
+is($a->[1], 1);
 
-print "not " unless $a->[2] == 2;
-print "ok 13\n";
+is($a->[2], 2);
 
-print "not " unless $a->[3] == 3;
-print "ok 14\n";
+is($a->[3], 3);
 
-print "not " unless @$a == 4;
-print "ok 15\n";
+is(@$a, 4);
 
 $a = adist(["abc", "abd", "ade", "def"], ["abc", "abd", "ade", "def"]);
 
-print "not " unless $a->[0]->[0] == 0;
-print "ok 16\n";
+is($a->[0]->[0], 0);
 
-print "not " unless $a->[1]->[2] == 2;
-print "ok 17\n";
+is($a->[1]->[2], 2);
 
-print "not " unless $a->[2]->[1] == 1;
-print "ok 18\n";
+is($a->[2]->[1], 1);
 
-print "not " unless $a->[3]->[3] == 0;
-print "ok 19\n";
+is($a->[3]->[3], 0);
 
-print "not " unless @$a == 4;
-print "ok 20\n";
+is(@$a, 4);
 
-print "not " unless adist("abcd", "abc") == -1;
-print "ok 21\n";
+is(adist("abcd", "abc"), -1);
 
-print "not " unless adistr("abcd", "abc") == -1/4;
-print "ok 22\n";
+is(adistr("abcd", "abc"), -1/4);
 
-print "not " unless adist("abcde", "abc") == -2;
-print "ok 23\n";
+is(adist("abcde", "abc"), -2);
 
-print "not " unless adistr("abcde", "abc") == -2/5;
-print "ok 24\n";
+is(adistr("abcde", "abc"), -2/5);
 
 my @a = adist("abc", "abd", "ade", "def");
 
-print "not " unless $a[2] == 3;
-print "ok 25\n";
+is($a[2], 3);
 
 {
     my @abd = ("abd", "bad");
     my @r = adistr("abc", @abd);
-    print "not " unless @r == 2 && $r[0] == 1/3 && $r[1] == 2/3;
-    print "ok 26\n";
+    is(@r, 2);
+    is($r[0], 1/3);
+    is($r[1], 2/3);
 }
 
 

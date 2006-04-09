@@ -1,3 +1,29 @@
+2006-04-09  Jarkko Hietaniemi  <jhi@Chicxulub.local>
+ 
+	* Try to underline, highlight, and explain the fact that
+	  String::Approx does not do a good job for comparing
+	  strings "with fuzz", use the Levenshtein et al for that.
+	
+	* aindex() might return "too early" indices if either the pattern
+	  or the text contain repetitive characters, this seems to be a
+	  tricky defect to fix and somewhat conflicting with our model
+	  (return "as early as possible" matches, just like regular
+	  expressions) (to get "as late as possible" matches one would
+	  basically have to keep retrying at later indices until one
+	  fails), so for now only document this known problem.
+	  The same goes for aslice().
+	
+	* [INTERNAL] use Test::More (not 100% yet)
+	
+	* [INTERNAL] apse.c: do not reset text_position_range in apse_reset
+	  (thanks to Helmut Jarausch)
+	
+	* [INTERNAL] apse.c: add #include <assert.h>.
+	
+	* [INTERNAL] apse.c: small signed/unsigned cleanups.
+	
+	* Released as 3.26.
+	
 2005-05-24  Jarkko Hietaniemi  <jhi@iki.fi>
 	
 	* Pure documentation cleanup release to address
