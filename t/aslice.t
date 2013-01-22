@@ -1,10 +1,6 @@
 use String::Approx 'aslice';
 use Test::More tests => 20;
 
-chdir('t') or die "could not chdir to 't'";
-
-require 'util';
-
 @s = aslice("xyz", "abcdef");
 is(@s, 1);
 is(@{$s[0]}, 0);

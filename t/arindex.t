@@ -1,15 +1,9 @@
 use String::Approx 'arindex';
+use Test::More tests => 3;
 
-chdir('t') or die "could not chdir to 't'";
+is(arindex("xyz", "abcxyzdefxyz"), 9);
 
-print "1..3\n";
+is(arindex("xyz", "abcxyzdefghi"), 3);
 
-print "not " unless arindex("xyz", "abcxyzdefxyz") ==  9;
-print "ok 1\n";
-
-print "not " unless arindex("xyz", "abcxyzdefghi") ==  3;
-print "ok 2\n";
-
-print "not " unless arindex("xyz", "abcwyzdefghi") ==  3;
-print "ok 3\n";
+is(arindex("xyz", "abcwyzdefghi"), 3);
 

@@ -1,6 +1,8 @@
 package String::Approx;
 
-$VERSION = '3.26';
+require v5.8.0;
+
+$VERSION = '3.27';
 
 use strict;
 local $^W = 1;
@@ -122,7 +124,8 @@ sub _parse_param {
             } elsif (s/^\?//) {
                 $param{'?'} = 1;
             } else {
-                die "unknown parameter: '$_'\n";
+                warn "unknown parameter: '$_'\n";
+                return;
             }
         }
     }
@@ -261,7 +264,9 @@ sub amatch {
         }
     } 
     return $a->match($_) if defined $_;
-    die "amatch: \$_ is undefined: what are you matching?\n";
+
+    warn "amatch: \$_ is undefined: what are you matching?\n";
+    return;
 }
 
 sub _find_substitute {
@@ -344,7 +349,8 @@ sub asubstitute {
 	}
 	return $_ = $n[0];
     } else {
-	die "asubstitute: \$_ is undefined: what are you substituting?\n";
+	warn "asubstitute: \$_ is undefined: what are you substituting?\n";
+        return;
     }
 }
 
@@ -364,7 +370,9 @@ sub aindex {
 	}
     }
     return $a->index($_) if defined $_;
-    die "aindex: \$_ is undefined: what are you indexing?\n";
+
+    warn "aindex: \$_ is undefined: what are you indexing?\n";
+    return;
 }
 
 sub aslice {
@@ -379,7 +387,9 @@ sub aslice {
 	return map { [ $a->slice($_) ] } @_;
     }
     return $a->slice($_) if defined $_;
-    die "aslice: \$_ is undefined: what are you slicing?\n";
+
+    warn "aslice: \$_ is undefined: what are you slicing?\n";
+    return;
 }
 
 sub _adist {
@@ -394,6 +404,12 @@ sub _adist {
 sub adist {
     my $a0 = shift;
     my $a1 = shift;
+    if (length($a0) == 0) {
+      return length($a1);
+    }
+    if (length($a1) == 0) {
+      return length($a0);
+    }
     my @m = ref $_[0] eq 'ARRAY' ? @{shift()} : ();
     if (ref $a0 eq 'ARRAY') {
 	if (ref $a1 eq 'ARRAY') {
@@ -475,7 +491,9 @@ sub arindex {
 	my $aindex = $a->index(scalar reverse());
 	return $aindex == -1 ? $aindex : (length($_) - $aindex - $l);
     }
-    die "arindex: \$_ is undefined: what are you indexing?\n";
+
+    warn "arindex: \$_ is undefined: what are you indexing?\n";
+    return;
 }
 
 1;
@@ -539,10 +557,10 @@ transform I<"lead"> into I<"gold">, you need three edits:
 
 The edit distance of "lead" and "gold" is therefore three, or 75%.
 
-B<String::Approx uses the Levenshtein edit distance (tLed) as its
-measure, but String::Approx is not well-suited for comparing the tLeds
-of strings, in other words, if you want a "fuzzy eq", see above.
-Strings::Approx is more like regular expressions or index(), it finds
+B<String::Approx> uses the Levenshtein edit distance as its measure, but
+String::Approx is not well-suited for comparing strings of different
+length, in other words, if you want a "fuzzy eq", see above.
+String::Approx is more like regular expressions or index(), it finds
 substrings that are close matches.>
 
 =head1 MATCH
@@ -896,10 +914,12 @@ Jarkko Hietaniemi <jhi@iki.fi>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2001-2005 by Jarkko Hietaniemi
+Copyright 2001-2013 by Jarkko Hietaniemi
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+under either the terms of the Artistic License 2.0, or the GNU Library
+General Public License, Version 2.  See the files Artistic and LGPL
+for more details.
 
 Furthermore: no warranties or obligations of any kind are given, and
 the separate file F<COPYRIGHT> must be included intact in all copies

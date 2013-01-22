@@ -2,6 +2,7 @@
 # (These *were* bugs :-)
 
 use String::Approx qw(amatch aindex adist);
+use Test::More tests => 42;
 
 chdir('t') or die "could not chdir to 't'";
 
@@ -9,74 +10,56 @@ require 'util';
 
 local $^W = 1;
 
-print "1..39\n";
-
-# test 1: test long pattern both matching and not matching
+# test long pattern both matching and not matching
 # Thanks to Alberto Fontaneda <alberfon@ctv.es>
 # for this test case and also thanks to Dmitrij Frishman
 # <frishman@mips.biochem.mpg.de> for testing this test.
 {
 my @l = ('perl warks fiine','parl works fine', 'perl worrs', 'perl warkss');
 my @m = amatch('perl works fin', [2] , @l);
-print 'not ' if not @m == 2 or
-                $m[0] ne 'perl warks fiine' or
-                $m[1] ne 'parl works fine';
-print "ok 1\n";
+ok($m[0] eq 'perl warks fiine' &&
+   $m[1] eq 'parl works fine');
 #print "m = (@{[join(':',@m)]})\n";
 }
 
-# test 2: Slaven Rezic <eserte@cs.tu-berlin.de>
+# Slaven Rezic <eserte@cs.tu-berlin.de>
 
 {
 my @w=('one hundred','two hundred','three hundred','bahnhofstr. (koepenick)');
 my @m=amatch('bahnhofstr. ', ['i',3], @w);
-t(['bahnhofstr. (koepenick)'],[@m]);
-print "ok 2\n";
+ok(t(['bahnhofstr. (koepenick)'],[@m]));
 }
 
-# tests 3-6: Greg Ward <greg@bic.mni.mcgill.ca>
+# Greg Ward <greg@bic.mni.mcgill.ca>
 
-print "not " unless
-	amatch('mcdonald', 'macdonald') and
-	amatch('macdonald', 'mcdonald');
-print "ok 3\n";
+ok(amatch('mcdonald', 'macdonald'));
+ok(amatch('macdonald', 'mcdonald'));
 
-print "not " unless
-	amatch('mcdonald', ['I0'], 'macdonald'); 
-print "ok 4\n";
+ok(amatch('mcdonald', ['I0'], 'macdonald'));
 
-print "not " if
-	amatch('mcdonald', ['I0'], 'mcdonaald') or
-	amatch('mcdonald', ['I1'], 'mcdonaaald');
-print "ok 5\n";
+ok(amatch('mcdonald', ['I1'], 'mcdonaald'));
+ok(!amatch('mcdonald', ['I1'], 'mcdonaaald'));
 
-print "not " unless
-	amatch('mcdonald', ['1I1'], 'mcdonaald') and
-	amatch('mcdonald', ['2I2'], 'mcdonaaald');
-print "ok 6\n";
+ok(amatch('mcdonald', ['1I1'], 'mcdonaald'));
+ok(amatch('mcdonald', ['2I2'], 'mcdonaaald'));
 
-# test 7: Kevin Greiner <kgreiner@geosys.com>
+# Kevin Greiner <kgreiner@geosys.com>
 
 @IN = ("AK_ANCHORAGE A-7 NW","AK A ANCHORAGE B-8 NE");
 $Title = "AK_ANCHORAGE A-7 NE";
-print "not " unless amatch($Title, @IN);
-print "ok 7\n";
+ok(amatch($Title, @IN));
 
-# test 8: Ricky Houghton <ricky.houghton@cs.cmu.edu>
+# Ricky Houghton <ricky.houghton@cs.cmu.edu>
 
 @names = ("madeleine albright","william clinton");
 @matches = amatch("madeleine albriqhl",@names);
-print "not "
-	unless @matches == 1 and
-	$matches[0] eq "madeleine albright";
-print "ok 8\n";
+ok($matches[0] eq "madeleine albright");
 
 # test 9: Jared August <rudeop@skapunx.net>
 
-print "not " unless amatch("Dopeman (Remix)",["i","50%"],"Dopeman (Remix)");
-print "ok 9\n";
+ok(amatch("Dopeman (Remix)",["i","50%"],"Dopeman (Remix)"));
 
-# tests 10-16: Steve A. Chervitz <sac@genome.Stanford.edu>
+# Steve A. Chervitz <sac@genome.Stanford.edu>
 
 # Short vs. Long behaved differently than Long vs. Short.
 
@@ -88,28 +71,13 @@ $s1   = "MSRTGHGGLMPVNGLGFPPQNVARVVVWECLNEHSRWRPYTATVCHHIENVLKEDARGSVVLGQVDAQ".
 $s1_1 = "MSRPGHGGLMPVNGLGFPPQNVARVVVWECLNEHSRWRPYTATVCHHIENVLKEDARGSVVLGQVDAQ".
     "LVPYIIDLQSMHQFRQDTGTMRPVRRNFYDPSSAPGKGIVWEWENDGGAWTAYDMDICITIQNAYEKQHPWLW";
 
-if(amatch($s1, ['5%'], $s1_1)) {  # this failed to match
-    #
-} else {
-    print "not ";
-}
-print "ok 10\n";
+ok(amatch($s1, ['5%'], $s1_1));  # this failed to match
 
-if(amatch($s1_1, ['5%'], $s1)) {
-    #
-} else {
-    print "not ";
-}
-print "ok 11\n";
+ok(amatch($s1_1, ['5%'], $s1));
 
 # s1_1 vs. s1: (attempting to disallow insertions).
 
-if(amatch($s1_1, ['5%','I0'], $s1)) {  
-    #
-} else {
-    print "not ";
-}
-print "ok 12\n";
+ok(amatch($s1_1, ['5%','I0'], $s1));
 
 #-----------------------------------------------------------------------
 # Position dependency of approximate matching.
@@ -148,21 +116,11 @@ $s2_2  = "DLSSLGFC_LIYFNSMSQMNRQTRRRRRLRRRLDLAYPLTVGSIPKSQSWPVGASSGQPCSCQQCLLVNS
 
 # s2 vs s2_1: (substitutions close together)
 
-if(amatch($s2, [10], $s2_1)) {
-    #
-} else {
-    print "not ";
-}
-print "ok 13\n";
+ok(amatch($s2, [10], $s2_1));
 
 # s2 vs s2_2: (substitutions far apart)
 
-if(amatch($s2, [10], $s2_2)) {
-    #
-} else {
-    print "not ";
-}
-print "ok 14\n";
+ok(amatch($s2, [10], $s2_2));
 
 #-----------------------------------------------------------------------
 # Difference in behavior of % differences versus absolute number of
@@ -179,23 +137,13 @@ $s3_1 = "MNIFEMLRIDEGLRLKIYKDTEGYYTIGIGHLLTKSPSLNAAKSELDKAIGRN_NGVITKDEAEKLFNQDV
 
 # s3 vs s3_1: (matching with 10% differences)
 
-if(amatch($s3, ['10%'], $s3_1)) { 
-    #
-} else {
-    print "not ";
-}
-print "ok 15\n";
+ok(amatch($s3, ['10%'], $s3_1));
 
 # s3 vs s3_1: (matching with 10 differences)
 
-if(amatch($s3, ['10'], $s3_1)) {    
-    #
-} else {
-    print "not ";
-}
-print "ok 16\n";
+ok(amatch($s3, ['10'], $s3_1));
 
-# test 17: Bob J.A. Schijvenaars <schijvenaars@mi.fgg.eur.nl>
+# Bob J.A. Schijvenaars <schijvenaars@mi.fgg.eur.nl>
 
 @gloslist = ('computer', 'computermonitorsalesman');
 @matches = amatch('computers', [1,'g'], @gloslist);
@@ -209,106 +157,85 @@ for (@matches) {
    $b .= "|$_|";
 }
 
-print "not " unless $a eq $b and $a eq "|computer||computermonitorsalesman|";
-print "ok 17\n";
+ok($a eq $b and $a eq "|computer||computermonitorsalesman|");
 
-# test 18: Rick Wise <rwise@lcc.com>
+# Rick Wise <rwise@lcc.com>
 
-print "not " unless amatch('abc', [10], 'abd');
-print "ok 18\n";
+ok(amatch('abc', [10], 'abd'));
 
-# tests 19-21: Ilya Sandler <sandler@etak.com>
+# Ilya Sandler <sandler@etak.com>
 
 $_="ABCDEF";
-print "not " if amatch("ABCDEF","VWXYZ");
-print "ok 19\n";
+ok(!amatch("ABCDEF","VWXYZ"));
 
-print "not " unless amatch("BURTONUPONTRENT",['5'], "BURTONONTRENT");
-print "ok 20\n";
+ok(amatch("BURTONUPONTRENT",['5'], "BURTONONTRENT"));
 
-print "not " unless amatch("BURTONONTRENT",['5'], "BURTONUPONTRENT");
-print "ok 21\n";
+ok(amatch("BURTONONTRENT",['5'], "BURTONUPONTRENT"));
 
-# tests 22-25: Chris Rosin <crosin@cparity.com> and
+# Chris Rosin <crosin@cparity.com> and
 # Mark Land <mark@cparity.com>.
 
-print "not " if amatch("Karivaratharajan", "Rajan");
-print "ok 22\n";
+ok(!amatch("Karivaratharajan", "Rajan"));
 
-print "not " unless amatch("Rajan", "Karivaratharajan");
-print "ok 23\n";
+ok(amatch("Rajan", "Karivaratharajan"));
 
-print "not " unless amatch("Ferna", "Fernandez");
-print "ok 24\n";
+ok(amatch("Ferna", "Fernandez"));
 
-print "not " if amatch("Fernandez", "Ferna");
-print "ok 25\n";
+ok(!amatch("Fernandez", "Ferna"));
 
-# tests 26-28: Mitch Helle <MHelle@linguistech.com>
+# Mitch Helle <MHelle@linguistech.com>
 
-print "not " if amatch('ffffff', 'a');
-print "ok 26\n";
+ok(!amatch('ffffff', 'a'));
 
-print "not " if amatch('fffffffffff', 'a');
-print "ok 27\n";
- 
-print "not " if amatch('fffffffffffffffffffff', 'ab');
-print "ok 28\n";
+ok(!amatch('fffffffffff', 'a'));
 
-# test 29: Anirvan Chatterjee <anirvan@chatterjee.net>
+ok(!amatch('fffffffffffffffffffff', 'ab'));
 
-print "not " unless amatch("", "foo");
-print "ok 29\n";
+# Anirvan Chatterjee <anirvan@chatterjee.net>
 
-# test 30: Rob Fugina
+ok(amatch("", "foo"));
+
+# Rob Fugina
 
 open(MAKEFILEPL, "../Makefile.PL") or die "$0: failed to open Makefile.PL: $!";
 # Don't let a debugging version escape the laboratory.
-print "not " if my $debugging = grep {/^[^#]*-DAPSE_DEBUGGING/} <MAKEFILEPL>;
-print "ok 30\n";
+my $debugging = grep {/^[^#]*-DAPSE_DEBUGGING/} <MAKEFILEPL>;
+ok(!$debugging);
 close(MAKEFILEPL);
 warn "(You have -DAPSE_DEBUGGING turned on!)\n" if $debugging;
 
-# test 31: David Curiel
-print "not " unless aindex("xyz", "abxefxyz") == 5;
-print "ok 31\n";
-print aindex("xyz", "abxefxyz"), "\n";
+# David Curiel
+is(aindex("xyz", "abxefxyz"), 5);
 
-# tests 32..34: Stefan Ram <ram@cis.fu-berlin.de>
+# Stefan Ram <ram@cis.fu-berlin.de>
 
-print "not " unless aindex( "knral", "nisinobikttatnbankfirknalt" ) == 21;
-print "ok 32\n";
-print "not " unless aindex( "knral", "nbankfirknalt" ) == 8;
-print "ok 33\n";
-print "not " unless aindex( "knral", "nkfirknalt" ) == 5;
-print "ok 34\n";
+is(aindex( "knral", "nisinobikttatnbankfirknalt" ), 21);
 
-# test 35: Chris Rosin <crosin@cparity.com>
+is(aindex( "knral", "nbankfirknalt"), 8);
 
-print "not " unless adist('MOM','XXMOXXMOXX') == 1;
-print "ok 35\n";
+is(aindex( "knral", "nkfirknalt"), 5);
 
-# test 36: Frank Tobin <ftobin@uiuc.edu>
+# Chris Rosin <crosin@cparity.com>
 
-print "not " unless aindex('----foobar----',[1],'----aoobar----') == 0;
-print "ok 36\n";
+is(adist('MOM','XXMOXXMOXX'), 1);
 
-# test 37: Damian Keefe <damian.keefe@incyte.com>
+# Frank Tobin <ftobin@uiuc.edu>
 
-print "not " unless aindex('tccaacttctctgtgactgaccaaagaa','tctttgcatccaatactccaacttctctgtggctgaccaaagaattggcacctatcttgccagtcaggtagttctgatgggtccagcacagactggctgcctgggggagaaagacagcattgatttgaagtggtgaacactataactcccctagctcatcacaaaacaagcagacaagaaccacagcttc') == 16;
-print "ok 37\n";
+is(aindex('----foobar----',[1],'----aoobar----'), 0);
 
-# test 38: Juha Muilu <muilu@ebi.ac.uk>
+# Damian Keefe <damian.keefe@incyte.com>
 
-print "not " unless aindex("pattern", "aaaaaaaaapattern") == 9;
-print "ok 38\n";
+is(aindex('tccaacttctctgtgactgaccaaagaa','tctttgcatccaatactccaacttctctgtggctgaccaaagaattggcacctatcttgccagtcaggtagttctgatgggtccagcacagactggctgcctgggggagaaagacagcattgatttgaagtggtgaacactataactcccctagctcatcacaaaacaagcagacaagaaccacagcttc'), 16);
 
-# test 39: Ji Y Park <jypark@Stanford.EDU>
+# Juha Muilu <muilu@ebi.ac.uk>
+
+is(aindex("pattern", "aaaaaaaaapattern"), 9);
+
+# Ji Y Park <jypark@Stanford.EDU>
 # 0% must mean 0.
 
 $_="TTES";
-print "not " if amatch("test", ["i I0% S0% D0%"]);
-print "ok 39\n";
+ok(!amatch("test", ["i I0% S0% D0%"]));
 
 # eof
 

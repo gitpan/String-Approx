@@ -1,7 +1,5 @@
 use String::Approx 'aindex';
-use Test::More tests => 12;
-
-chdir('t') or die "could not chdir to 't'";
+use Test::More tests => 16;
 
 is(aindex("xyz", "abcdef"), -1);
 
@@ -29,5 +27,11 @@ is(aindex("xyz", ["initial_position=2",
 
 is(aindex("xyz", ["initial_position=1",
 		  "final_position=6"],   "xyzabcxyz"), 1);
+
+is(aindex("xyz", ""), -1);
+is(aindex("", "xyz"), 0);
+is(aindex("", ""), 0);
+
+is(aindex("\x{100}d", "ab\x{100}cd"), 2);
 
 # that's it.

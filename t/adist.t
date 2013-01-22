@@ -1,7 +1,5 @@
 use String::Approx qw(adist adistr adistword adistrword);
-use Test::More tests => 28;
-
-chdir('t') or die "could not chdir to 't'";
+use Test::More tests => 32;
 
 is(adist("abc", "abc"), 0);
 
@@ -69,4 +67,8 @@ is($a[2], 3);
     is($r[1], 2/3);
 }
 
+is(adist("abc", ""), 3);
+is(adist("", "abc"), 3);
+is(adist("", ""), 0);
 
+is(adist("\x{100}", ""), 1);

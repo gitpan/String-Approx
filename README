@@ -44,7 +44,12 @@ Then the bad news:
 * The 'compat1' option to be backward compatible with String::Approx
   release 1 is no more supported.
   
-Perl 5.004_04 required (but I recommend 5.005_02).
+Perl 5.8 is required.
+
+This library is free software; you can redistribute it and/or modify
+under either the terms of the Artistic License 2.0, or the GNU Library
+General Public License, Version 2.  See the files Artistic and LGPL
+for more details.
 
 About the future of String::Approx version 2:
 (1) I repeat: I won't be deleting version 2.7.

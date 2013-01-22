@@ -2,7 +2,7 @@ sub t {
     my ($a, $b) = @_;
     my ($wa, $wb, $db);
 
-    my $not = 0;
+    my $fail = 0;
 
     foreach (@$a) { chomp }
     foreach (@$b) { chomp }
@@ -24,20 +24,19 @@ sub t {
 	    }
 	    if (not $db or $wa ne $wb) {
 		print STDERR "# ne: $wa $wb\n";
-		print 'not ';
-		$not = 1;
+		$fail = 1;
 		last;
 	    }
 	}
     } else {
 	print STDERR "# !=: ", scalar @$a, " ", scalar @$b, "\n";
-	print 'not ';
-	$not = 1;
+	$fail = 1;
     }
-    if ($not) {
+    if ($fail) {
 	print STDERR "# EXPECTED: @oa\n";
 	print STDERR "# GOT:      @ob\n";
     }
+    return !$fail;
 }
 
 1;
